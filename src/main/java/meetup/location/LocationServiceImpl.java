@@ -13,19 +13,21 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public Location createLocation(Location location) {
-        Location locationSaved;
-        if (!checkLocation(location)) {
+        Location locationSaved = getLocationByLatAndLon(location.getLat(), location.getLon());
+
+        if (locationSaved == null) {
             locationSaved = locationRepository.save(location);
+
             log.info("Location created - lat: " + location.getLat() + ", lon: " + location.getLon());
         } else {
-            locationSaved = locationRepository.findByLatAndLon(location.getLat(), location.getLon());
             log.info("Location found - lat: " + location.getLat() + ", lon: " + location.getLon());
         }
+
         return locationSaved;
     }
 
-    private Boolean checkLocation(Location location) {
-        return locationRepository.findByLatAndLon(location.getLat(), location.getLon()) != null;
+    private Location getLocationByLatAndLon(Float lat, Float lon) {
+        return locationRepository.findByLatAndLon(lat, lon).orElse(null);
     }
 
 }
