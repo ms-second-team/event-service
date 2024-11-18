@@ -2,12 +2,15 @@ package meetup.event.mapper;
 
 import meetup.event.dto.EventDto;
 import meetup.event.dto.NewEventDto;
+import meetup.event.dto.UpdatedEventDto;
 import meetup.event.model.Event;
-import meetup.location.Location;
-import meetup.location.LocationDto;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
 
 import java.util.List;
+
+import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
 
 @Mapper(componentModel = "spring")
 public interface EventMapper {
@@ -15,9 +18,8 @@ public interface EventMapper {
 
     EventDto toEventDto(Event event);
 
-    LocationDto toLocationDto(Location location);
-
-    Location toLocation(LocationDto locationDto);
-
     List<EventDto> toDtoList(List<Event> events);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = IGNORE)
+    void updateEvent(UpdatedEventDto updatedEventDto, @MappingTarget Event eventToToUpdate);
 }

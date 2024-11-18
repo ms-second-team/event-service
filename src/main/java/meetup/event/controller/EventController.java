@@ -9,7 +9,10 @@ import meetup.event.mapper.EventMapper;
 import meetup.event.dto.EventDto;
 import meetup.event.dto.NewEventDto;
 import meetup.event.dto.UpdatedEventDto;
+import meetup.event.model.Event;
 import meetup.event.service.EventService;
+import meetup.location.Location;
+import meetup.location.LocationMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +25,8 @@ import java.util.List;
 @RequestMapping(path = "/events")
 public class EventController {
     private final EventService service;
-    private final EventMapper mapper;
+    private final EventMapper eventMapper;
+    private final LocationMapper locationMapper;
     private static final String SHARER_USER_ID = "X-Sharer-User-Id";
 
     @PostMapping
@@ -31,7 +35,10 @@ public class EventController {
 
         log.info("---START CREATE EVENT ENDPOINT---");
 
-        EventDto eventDto = mapper.toEventDto(service.createEvent(userId, newEventDto));
+        Event event = eventMapper.toEventFromNewEventDto(newEventDto);
+        Location location = locationMapper.toLocation(newEventDto.location());
+        Event eventCreated = service.createEvent(userId, event, location);
+        EventDto eventDto = eventMapper.toEventDto(eventCreated);
 
         return new ResponseEntity<>(eventDto, HttpStatus.CREATED);
     }
@@ -44,8 +51,11 @@ public class EventController {
 
         log.info("---START UPDATE EVENT ENDPOINT---");
 
-        return new ResponseEntity<>(mapper.toEventDto(service.updateEvent(userId, id,
-                updatedEventDto)), HttpStatus.OK);
+        Location location = locationMapper.toLocation(updatedEventDto.location());
+        Event event = service.updateEvent(userId, id, updatedEventDto, location);
+        EventDto eventDto = eventMapper.toEventDto(event);
+
+        return new ResponseEntity<>(eventDto, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
@@ -54,7 +64,10 @@ public class EventController {
 
         log.info("---START GET EVENT BY ID ENDPOINT---");
 
-        return new ResponseEntity<>(mapper.toEventDto(service.getEventById(id, userId)), HttpStatus.OK);
+        Event event = service.getEventById(id, userId);
+        EventDto eventDto = eventMapper.toEventDto(event);
+
+        return new ResponseEntity<>(eventDto, HttpStatus.OK);
     }
 
     @GetMapping
@@ -64,7 +77,10 @@ public class EventController {
 
         log.info("---START GET EVENTS ENDPOINT---");
 
-        return new ResponseEntity<>(mapper.toDtoList(service.getEvents(from, size, userId)), HttpStatus.OK);
+        List<Event> events = service.getEvents(from, size, userId);
+        List<EventDto> eventsDto = eventMapper.toDtoList(events);
+
+        return new ResponseEntity<>(eventsDto, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")

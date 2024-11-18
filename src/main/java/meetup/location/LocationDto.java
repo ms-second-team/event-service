@@ -1,18 +1,16 @@
 package meetup.location;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Builder
 public record LocationDto(
-    @NotNull
-    String name,
-    @NotNull
-    Float lat,
-    @NotNull
-    Float lon
-){
+        @NotBlank(message = "Name can not be blank")
+        String name,
+        @NotNull(message = "Latitude cannot be null")
+        Float lat,
+        @NotNull(message = "Longitude cannot be null")
+        Float lon
+) {
 }
