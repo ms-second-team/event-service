@@ -1,9 +1,7 @@
 package meetup.event.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
-import meetup.location.Location;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -26,9 +24,7 @@ public class Event {
     private LocalDateTime createdDateTime;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
-    @ManyToOne
-    @JoinColumn(name = "location_id")
-    private Location location;
+    private String location;
     @Column(name = "owner_id")
     private Long ownerId;
 }

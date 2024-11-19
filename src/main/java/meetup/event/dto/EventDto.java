@@ -1,7 +1,6 @@
 package meetup.event.dto;
 
 import lombok.Builder;
-import meetup.location.LocationDto;
 
 import java.time.LocalDateTime;
 
@@ -13,7 +12,7 @@ public record EventDto(
         LocalDateTime createdDateTime,
         LocalDateTime startDateTime,
         LocalDateTime endDateTime,
-        LocationDto location,
+        String location,
         Long ownerId
 ) {
 }

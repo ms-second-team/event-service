@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.DateTimeException;
+
 @RestControllerAdvice
 public class ErrorHandler {
     @ExceptionHandler
@@ -23,6 +25,15 @@ public class ErrorHandler {
         return new ErrorResponse(
                 e.getMessage(),
                 HttpStatus.FORBIDDEN.value()
+        );
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleDateTimeException(final DateTimeException e) {
+        return new ErrorResponse(
+                e.getMessage(),
+                HttpStatus.CONFLICT.value()
         );
     }
 

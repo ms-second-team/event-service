@@ -5,14 +5,5 @@ databaseChangeLog:
       changes:
         - sqlFile:
             dbms: postgresql
-            path: changeset/create_locations.sql
-            relativeToChangelogFile: true
-
-  - changeSet:
-      id: 2
-      author: Galina
-      changes:
-        - sqlFile:
-            dbms: postgresql
             path: changeset/create_events.sql
             relativeToChangelogFile: true

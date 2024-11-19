@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
-import meetup.location.LocationDto;
 
 import java.time.LocalDateTime;
 
@@ -19,6 +18,6 @@ public record UpdatedEventDto(
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
         @Future(message = "End date and time must be in future")
         LocalDateTime endDateTime,
-        LocationDto location
+        String location
 ) {
 }

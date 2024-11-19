@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
-import meetup.location.LocationDto;
 
 import java.time.LocalDateTime;
 
@@ -23,7 +22,7 @@ public record NewEventDto(
         @Future(message = "End date and time must be in future")
         @NotNull(message = "End date and time cannot be null")
         LocalDateTime endDateTime,
-        @NotNull(message = "Location cannot be null")
-        LocationDto location
+        @NotBlank(message = "Location cannot be null")
+        String location
 ) {
 }

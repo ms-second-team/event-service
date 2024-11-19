@@ -11,8 +11,6 @@ import meetup.event.dto.NewEventDto;
 import meetup.event.dto.UpdatedEventDto;
 import meetup.event.model.Event;
 import meetup.event.service.EventService;
-import meetup.location.Location;
-import meetup.location.LocationMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +24,6 @@ import java.util.List;
 public class EventController {
     private final EventService service;
     private final EventMapper eventMapper;
-    private final LocationMapper locationMapper;
     private static final String SHARER_USER_ID = "X-Sharer-User-Id";
 
     @PostMapping
@@ -36,8 +33,7 @@ public class EventController {
         log.info("---START CREATE EVENT ENDPOINT---");
 
         Event event = eventMapper.toEventFromNewEventDto(newEventDto);
-        Location location = locationMapper.toLocation(newEventDto.location());
-        Event eventCreated = service.createEvent(userId, event, location);
+        Event eventCreated = service.createEvent(userId, event);
         EventDto eventDto = eventMapper.toEventDto(eventCreated);
 
         return new ResponseEntity<>(eventDto, HttpStatus.CREATED);
@@ -51,8 +47,7 @@ public class EventController {
 
         log.info("---START UPDATE EVENT ENDPOINT---");
 
-        Location location = locationMapper.toLocation(updatedEventDto.location());
-        Event event = service.updateEvent(userId, id, updatedEventDto, location);
+        Event event = service.updateEvent(userId, id, updatedEventDto);
         EventDto eventDto = eventMapper.toEventDto(event);
 
         return new ResponseEntity<>(eventDto, HttpStatus.OK);
@@ -64,7 +59,7 @@ public class EventController {
 
         log.info("---START GET EVENT BY ID ENDPOINT---");
 
-        Event event = service.getEventById(id, userId);
+        Event event = service.getEventByEventId(id, userId);
         EventDto eventDto = eventMapper.toEventDto(event);
 
         return new ResponseEntity<>(eventDto, HttpStatus.OK);

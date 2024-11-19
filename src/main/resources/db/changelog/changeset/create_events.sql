@@ -5,8 +5,7 @@ CREATE TABLE IF NOT EXISTS events (
 	created_date_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
 	start_date_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     end_date_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-	location_id BIGINT NOT NULL,
+	location varchar(255) NOT NULL,
     owner_id BIGINT NOT NULL,
-	CONSTRAINT pk_events PRIMARY KEY (id),
-	CONSTRAINT events_locations_fk FOREIGN KEY (location_id) REFERENCES PUBLIC.locations(id)
+	CONSTRAINT pk_events PRIMARY KEY (id)
 );
