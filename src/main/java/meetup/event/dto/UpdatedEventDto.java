@@ -18,6 +18,7 @@ public record UpdatedEventDto(
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
         @Future(message = "End date and time must be in future")
         LocalDateTime endDateTime,
+        @Pattern(regexp = "^(?!\\s*$).+", message = "Location can not be empty")
         String location
 ) {
 }
