@@ -1,0 +1,25 @@
+services:
+
+  event-service:
+    build: .
+    image: event-service
+    container_name: event-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/events-db
+
+
+  db:
+    image: postgres:13.7-alpine
+    container_name: db
+    ports:
+      - "6541:5432"
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB=events-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root

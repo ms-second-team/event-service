@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: Galina
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: changeset/create_events.sql
+            relativeToChangelogFile: true
