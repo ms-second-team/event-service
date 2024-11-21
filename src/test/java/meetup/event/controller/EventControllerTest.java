@@ -23,9 +23,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -126,7 +134,7 @@ class EventControllerTest {
                         .content(mapper.writeValueAsString(newEventDto))
                         .header(SHARER_USER_ID, 1))
                 .andExpect(status().isBadRequest())
-                .andExpect(result -> Assertions.assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException))
+                .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
 
         verify(eventMapper, never()).toEventDto(any());
@@ -149,7 +157,7 @@ class EventControllerTest {
                         .content(mapper.writeValueAsString(newEventDto))
                         .header(SHARER_USER_ID, 1))
                 .andExpect(status().isBadRequest())
-                .andExpect(result -> Assertions.assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException))
+                .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
 
         verify(eventMapper, never()).toEventDto(any());
@@ -172,7 +180,7 @@ class EventControllerTest {
                         .content(mapper.writeValueAsString(newEventDto))
                         .header(SHARER_USER_ID, 1))
                 .andExpect(status().isBadRequest())
-                .andExpect(result -> Assertions.assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException))
+                .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
 
         verify(eventMapper, never()).toEventDto(any());
@@ -195,7 +203,7 @@ class EventControllerTest {
                         .content(mapper.writeValueAsString(newEventDto))
                         .header(SHARER_USER_ID, 1))
                 .andExpect(status().isBadRequest())
-                .andExpect(result -> Assertions.assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException))
+                .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
 
         verify(eventMapper, never()).toEventDto(any());
@@ -218,7 +226,7 @@ class EventControllerTest {
                         .content(mapper.writeValueAsString(newEventDto))
                         .header(SHARER_USER_ID, 1))
                 .andExpect(status().isBadRequest())
-                .andExpect(result -> Assertions.assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException))
+                .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
 
         verify(eventMapper, never()).toEventDto(any());
@@ -241,7 +249,7 @@ class EventControllerTest {
                         .content(mapper.writeValueAsString(newEventDto))
                         .header(SHARER_USER_ID, 1))
                 .andExpect(status().isBadRequest())
-                .andExpect(result -> Assertions.assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException))
+                .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
 
         verify(eventMapper, never()).toEventDto(any());
@@ -264,7 +272,7 @@ class EventControllerTest {
                         .content(mapper.writeValueAsString(newEventDto))
                         .header(SHARER_USER_ID, 1))
                 .andExpect(status().isBadRequest())
-                .andExpect(result -> Assertions.assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException))
+                .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
 
         verify(eventMapper, never()).toEventDto(any());
@@ -315,7 +323,7 @@ class EventControllerTest {
                         .content(mapper.writeValueAsString(updatedEvent))
                         .header(SHARER_USER_ID, 1))
                 .andExpect(status().isBadRequest())
-                .andExpect(result -> Assertions.assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException))
+                .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
 
         verify(eventService, never()).updateEvent(anyLong(), anyLong(), any());
@@ -337,7 +345,7 @@ class EventControllerTest {
                         .content(mapper.writeValueAsString(updatedEvent))
                         .header(SHARER_USER_ID, 1))
                 .andExpect(status().isBadRequest())
-                .andExpect(result -> Assertions.assertTrue(result.getResolvedException() instanceof MethodArgumentNotValidException))
+                .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
 
         verify(eventService, never()).updateEvent(anyLong(), anyLong(), any());

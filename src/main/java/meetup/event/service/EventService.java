@@ -1,7 +1,7 @@
 package meetup.event.service;
 
-import meetup.event.model.Event;
 import meetup.event.dto.UpdatedEventDto;
+import meetup.event.model.Event;
 
 import java.util.List;
 

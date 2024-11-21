@@ -5,5 +5,14 @@ databaseChangeLog:
       changes:
         - sqlFile:
             dbms: postgresql
-            path: changeset/create_events.sql
+            path: changeset/001_create_events.sql
+            relativeToChangelogFile: true
+
+  - changeSet:
+      id: 002
+      author: ViktorWagner
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: changeset/002_create_tb_team_members.sql
             relativeToChangelogFile: true
