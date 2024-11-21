@@ -33,8 +33,8 @@ class EventServiceImplTest {
             .name("event")
             .description("event description")
             .createdDateTime(null)
-            .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 00, 00))
-            .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 00, 00))
+            .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
+            .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
             .location("location")
             .ownerId(null)
             .build();
@@ -42,8 +42,8 @@ class EventServiceImplTest {
     private final UpdatedEventDto updatedEventDto = UpdatedEventDto.builder()
             .name(null)
             .description("updatedEvent description")
-            .startDateTime(LocalDateTime.of(2024, 12, 27, 19, 00, 00))
-            .endDateTime(LocalDateTime.of(2024, 12, 27, 23, 00, 00))
+            .startDateTime(LocalDateTime.of(2024, 12, 27, 19, 0, 0))
+            .endDateTime(LocalDateTime.of(2024, 12, 27, 23, 0, 0))
             .location("updated location")
             .build();
 
@@ -64,8 +64,8 @@ class EventServiceImplTest {
                 .name("event")
                 .description("event description")
                 .createdDateTime(null)
-                .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 00, 00))
-                .endDateTime(LocalDateTime.of(2023, 12, 26, 22, 00, 00))
+                .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
+                .endDateTime(LocalDateTime.of(2023, 12, 26, 22, 0, 0))
                 .location("location")
                 .ownerId(null)
                 .build();
@@ -131,8 +131,8 @@ class EventServiceImplTest {
         UpdatedEventDto updatedEventDto = UpdatedEventDto.builder()
                 .name(null)
                 .description(null)
-                .startDateTime(LocalDateTime.of(2024, 12, 27, 19, 00, 00))
-                .endDateTime(LocalDateTime.of(2023, 12, 27, 23, 00, 00))
+                .startDateTime(LocalDateTime.of(2024, 12, 27, 19, 0, 0))
+                .endDateTime(LocalDateTime.of(2023, 12, 27, 23, 0, 0))
                 .location(null)
                 .build();
 
