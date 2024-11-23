@@ -42,6 +42,9 @@ public class TeamMemberServiceImpl implements TeamMemberService {
     public List<TeamMemberDto> getTeamsByEventId(Long userId, Long eventId) {
         List<TeamMember> teamMembers = teamMemberRepository.findAllByIdEventId(eventId);
         log.debug("Found '{}' team members by event id = '{}' by user id ='{}'", teamMembers.size(), eventId, userId);
+        if (teamMembers.isEmpty()) {
+            return List.of();
+        }
         return teamMemberMapper.toTeamMemberDtoList(teamMembers);
     }
 
@@ -72,16 +75,16 @@ public class TeamMemberServiceImpl implements TeamMemberService {
         return true;
     }
 
-    private TeamMember getTeamMember(Long eventId, Long userId) {
-        return teamMemberRepository.findByIdEventIdAndIdUserId(eventId, userId).orElseThrow(
-                () -> new NotFoundException(String.format("Team member id = %d in team event id = %d", userId, eventId))
+    private TeamMember getTeamMember(Long eventId, Long memberId) {
+        return teamMemberRepository.findByIdEventIdAndIdUserId(eventId, memberId).orElseThrow(
+                () -> new NotFoundException(String.format("Team member id = %d in team event id = %d", memberId, eventId))
         );
     }
 
-    private void checkTeamMemberManagerRoleInEvent(Long eventId, Long userId) {
-        TeamMember user = getTeamMember(eventId, userId);
+    private void checkTeamMemberManagerRoleInEvent(Long eventId, Long memberId) {
+        TeamMember user = getTeamMember(eventId, memberId);
         if (!user.getRole().equals(TeamMemberRole.MANAGER)) {
-            throw new NotAuthorizedException(String.format("User id = %d in event id = %d not Manager", userId, eventId));
+            throw new NotAuthorizedException(String.format("User id = %d in event id = %d not Manager", memberId, eventId));
         }
     }
 }

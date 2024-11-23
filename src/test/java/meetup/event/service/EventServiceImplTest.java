@@ -1,12 +1,15 @@
 package meetup.event.service;
 
+import meetup.EventServiceApplication;
 import meetup.event.dto.UpdatedEventDto;
+import meetup.event.mapper.EventMapper;
 import meetup.event.model.Event;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -22,15 +25,19 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SpringBootTest
+@SpringBootTest(classes = EventServiceApplication.class)
 @Testcontainers
 class EventServiceImplTest {
     @Container
     @ServiceConnection
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:13.7-alpine");
+    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16.4-alpine");
+
+    @MockBean
+    private EventMapper eventMapper;
 
     @Autowired
     EventService eventService;
+
     private final Long userId = 1L;
     private final Event event = Event.builder()
             .id(null)

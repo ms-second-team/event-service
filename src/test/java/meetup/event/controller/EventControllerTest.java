@@ -3,10 +3,15 @@ package meetup.event.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import meetup.event.dto.EventDto;
 import meetup.event.dto.NewEventDto;
+import meetup.event.dto.NewTeamMemberDto;
+import meetup.event.dto.TeamMemberDto;
+import meetup.event.dto.UpdateTeamMemberDto;
 import meetup.event.dto.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.Event;
+import meetup.event.model.TeamMemberRole;
 import meetup.event.service.EventService;
+import meetup.event.service.TeamMemberService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,18 +19,23 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -51,7 +61,14 @@ class EventControllerTest {
     @Autowired
     private MockMvc mvc;
 
-    private static final String SHARER_USER_ID = "X-Sharer-User-Id";
+    @MockBean
+    private TeamMemberService teamMemberService;
+
+    @Autowired
+    private EventController eventController;
+
+
+    private static final String HEADER_X_USER_ID = "X-User-Id";
 
     private final NewEventDto newEventDto = NewEventDto.builder()
             .name("event")
@@ -104,7 +121,7 @@ class EventControllerTest {
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", is(eventDto.id()), Long.class))
                 .andExpect(jsonPath("$.name", is(eventDto.name())))
@@ -132,7 +149,7 @@ class EventControllerTest {
         mvc.perform(post("/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(newEventDto))
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
@@ -155,7 +172,7 @@ class EventControllerTest {
         mvc.perform(post("/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(newEventDto))
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
@@ -178,7 +195,7 @@ class EventControllerTest {
         mvc.perform(post("/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(newEventDto))
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
@@ -201,7 +218,7 @@ class EventControllerTest {
         mvc.perform(post("/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(newEventDto))
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
@@ -224,7 +241,7 @@ class EventControllerTest {
         mvc.perform(post("/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(newEventDto))
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
@@ -247,7 +264,7 @@ class EventControllerTest {
         mvc.perform(post("/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(newEventDto))
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
@@ -270,7 +287,7 @@ class EventControllerTest {
         mvc.perform(post("/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(newEventDto))
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
@@ -294,7 +311,7 @@ class EventControllerTest {
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(eventDto.id()), Long.class))
                 .andExpect(jsonPath("$.name", is(eventDto.name())))
@@ -321,7 +338,7 @@ class EventControllerTest {
         mvc.perform(patch("/events/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(updatedEvent))
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
@@ -343,7 +360,7 @@ class EventControllerTest {
         mvc.perform(patch("/events/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(updatedEvent))
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
@@ -366,7 +383,7 @@ class EventControllerTest {
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(eventDto.id()), Long.class))
                 .andExpect(jsonPath("$.name", is(eventDto.name())))
@@ -395,7 +412,7 @@ class EventControllerTest {
                         .queryParam("from", "0")
                         .queryParam("size", "20")
                         .queryParam("userId", "1")
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isOk());
 
         verify(eventService, times(1)).getEvents(anyInt(), anyInt(), anyLong());
@@ -409,7 +426,7 @@ class EventControllerTest {
         mvc.perform(get("/events?from=-3&size=20&userId=")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(events))
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isInternalServerError())
                 .andExpect(result -> Assertions.assertNotNull(result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.INTERNAL_SERVER_ERROR.value())));
@@ -425,7 +442,7 @@ class EventControllerTest {
         mvc.perform(get("/events?from=3&size=-20&userId=")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(events))
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isInternalServerError())
                 .andExpect(result -> Assertions.assertNotNull(result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.INTERNAL_SERVER_ERROR.value())));
@@ -441,7 +458,7 @@ class EventControllerTest {
         mvc.perform(get("/events?from=3&size=0&userId=")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(events))
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isInternalServerError())
                 .andExpect(result -> Assertions.assertNotNull(result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.INTERNAL_SERVER_ERROR.value())));
@@ -456,8 +473,115 @@ class EventControllerTest {
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
-                        .header(SHARER_USER_ID, 1))
+                        .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void addTeamMember_shouldReturnCreatedTeamMember() {
+        Long userId = 1L;
+        NewTeamMemberDto newTeamMemberDto = new NewTeamMemberDto(10L, 2L, TeamMemberRole.MEMBER);
+        TeamMemberDto teamMemberDto = new TeamMemberDto(10L, 2L, TeamMemberRole.MEMBER);
+
+        when(teamMemberService.addTeamMember(userId, newTeamMemberDto)).thenReturn(teamMemberDto);
+
+        ResponseEntity<TeamMemberDto> response = eventController.addTeamMember(userId, newTeamMemberDto);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(teamMemberDto, response.getBody());
+        verify(teamMemberService, times(1)).addTeamMember(userId, newTeamMemberDto);
+    }
+
+    @Test
+    void addTeamMember_shouldFailValidationWhenNewTeamMemberDtoIsInvalid() throws Exception {
+        Long userId = 1L;
+
+        NewTeamMemberDto invalidDto = new NewTeamMemberDto(null, 2L, null);
+
+        mvc.perform(post("/events/teams")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(invalidDto))
+                        .header(HEADER_X_USER_ID, userId))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
+                .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
+    }
+
+    @Test
+    void getTeamsByEventId_shouldReturnListOfTeamMembers() {
+        Long userId = 1L;
+        Long eventId = 10L;
+        List<TeamMemberDto> teamMembers = List.of(new TeamMemberDto(10L, 2L, TeamMemberRole.MEMBER));
+
+        when(teamMemberService.getTeamsByEventId(userId, eventId)).thenReturn(teamMembers);
+
+        ResponseEntity<List<TeamMemberDto>> response = eventController.getTeamsByEventId(userId, eventId);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(teamMembers, response.getBody());
+        verify(teamMemberService, times(1)).getTeamsByEventId(userId, eventId);
+    }
+
+    @Test
+    void getTeamsByEventId_shouldReturnEmptyListIfNoTeamMembersFound() {
+        Long userId = 1L;
+        Long eventId = 10L;
+
+        when(teamMemberService.getTeamsByEventId(userId, eventId)).thenReturn(Collections.emptyList());
+
+        ResponseEntity<List<TeamMemberDto>> response = eventController.getTeamsByEventId(userId, eventId);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().isEmpty());
+        verify(teamMemberService, times(1)).getTeamsByEventId(userId, eventId);
+    }
+
+    @Test
+    void updateTeamMemberInEvent_shouldUpdateAndReturnUpdatedTeamMember() {
+        Long userId = 1L;
+        Long eventId = 10L;
+        Long memberId = 2L;
+        UpdateTeamMemberDto updateTeamMemberDto = new UpdateTeamMemberDto(TeamMemberRole.MANAGER);
+        TeamMemberDto updatedDto = new TeamMemberDto(10L, 2L, TeamMemberRole.MANAGER);
+
+        when(teamMemberService.updateTeamMemberInEvent(userId, eventId, memberId, updateTeamMemberDto)).thenReturn(updatedDto);
+
+        ResponseEntity<TeamMemberDto> response = eventController.updateTeamMemberInEvent(userId, eventId, memberId, updateTeamMemberDto);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(updatedDto, response.getBody());
+        verify(teamMemberService, times(1)).updateTeamMemberInEvent(userId, eventId, memberId, updateTeamMemberDto);
+    }
+
+    @Test
+    void updateTeamMemberInEvent_shouldThrowExceptionWhenDtoIsInvalid() throws Exception {
+        Long userId = 1L;
+        Long eventId = 10L;
+        Long memberId = 2L;
+
+        UpdateTeamMemberDto invalidDto = new UpdateTeamMemberDto(null);
+
+        mvc.perform(patch("/events/teams/{eventId}/{memberId}", eventId, memberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(invalidDto))
+                        .header(HEADER_X_USER_ID, userId))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
+                .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
+    }
+
+    @Test
+    void deleteTeamMemberFromEvent_shouldDeleteTeamMemberSuccessfully() {
+        Long userId = 1L;
+        Long eventId = 10L;
+        Long memberId = 2L;
+
+        doNothing().when(teamMemberService).deleteTeamMemberFromEvent(userId, eventId, memberId);
+
+        ResponseEntity<Void> response = eventController.deleteTeamMemberFromEvent(userId, eventId, memberId);
+
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        verify(teamMemberService, times(1)).deleteTeamMemberFromEvent(userId, eventId, memberId);
     }
 
 }
