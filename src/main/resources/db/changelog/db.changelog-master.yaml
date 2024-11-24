@@ -16,3 +16,11 @@ databaseChangeLog:
             dbms: postgresql
             path: changeset/002_create_tb_team_members.sql
             relativeToChangelogFile: true
+  - changeSet:
+      id: 003
+      author: ViktorWagner
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: changeset/003_team_members_add_on_delete_cascade.sql
+            relativeToChangelogFile: true

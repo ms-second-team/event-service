@@ -109,9 +109,8 @@ public class EventController {
             @RequestBody @Valid NewTeamMemberDto newTeamMemberDto) {
         log.debug("Creating team member id = '{}' event id = '{}' by user id = '{}'",
                 newTeamMemberDto.userId(), newTeamMemberDto.eventId(), userId);
-        return new ResponseEntity<>(
-                teamMemberService.addTeamMember(userId, newTeamMemberDto),
-                HttpStatus.CREATED);
+        TeamMemberDto teamMemberDto = teamMemberService.addTeamMember(userId, newTeamMemberDto);
+        return new ResponseEntity<>(teamMemberDto, HttpStatus.CREATED);
     }
 
     @GetMapping("/teams/{eventId}")
@@ -119,9 +118,8 @@ public class EventController {
             @RequestHeader(HEADER_X_USER_ID) Long userId,
             @PathVariable Long eventId) {
         log.debug("User id = '{}' requests team info event id = '{}'", userId, eventId);
-        return new ResponseEntity<>(
-                teamMemberService.getTeamsByEventId(userId, eventId),
-                HttpStatus.OK);
+        List<TeamMemberDto> teamMemberDtos = teamMemberService.getTeamsByEventId(userId, eventId);
+        return new ResponseEntity<>(teamMemberDtos, HttpStatus.OK);
     }
 
     @PatchMapping("/teams/{eventId}/{memberId}")
@@ -131,9 +129,8 @@ public class EventController {
             @PathVariable Long memberId,
             @RequestBody @Valid UpdateTeamMemberDto updateTeamMemberDto) {
         log.debug("Updating team member id = '{}' in team event id = '{}' by user id = '{}'", memberId, eventId, userId);
-        return new ResponseEntity<>(
-                teamMemberService.updateTeamMemberInEvent(userId, eventId, memberId, updateTeamMemberDto),
-                HttpStatus.OK);
+        TeamMemberDto teamMemberDto = teamMemberService.updateTeamMemberInEvent(userId, eventId, memberId, updateTeamMemberDto);
+        return new ResponseEntity<>(teamMemberDto, HttpStatus.OK);
     }
 
     @DeleteMapping("/teams/{eventId}/{memberId}")

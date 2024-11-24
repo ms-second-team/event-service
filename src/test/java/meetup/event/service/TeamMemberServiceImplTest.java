@@ -8,7 +8,6 @@ import meetup.event.model.Event;
 import meetup.event.model.TeamMember;
 import meetup.event.model.TeamMemberId;
 import meetup.event.model.TeamMemberRole;
-import meetup.event.repository.EventRepository;
 import meetup.event.repository.TeamMemberRepository;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
@@ -18,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,13 +36,13 @@ class TeamMemberServiceImplTest {
     private TeamMemberRepository teamMemberRepository;
 
     @Mock
-    private EventRepository eventRepository;
-
-    @Mock
     private TeamMemberMapper teamMemberMapper;
 
     @InjectMocks
     private TeamMemberServiceImpl teamMemberService;
+
+    @Mock
+    private EventService eventService;
 
     @BeforeEach
     void setUp() {
@@ -52,15 +52,18 @@ class TeamMemberServiceImplTest {
     @Test
     void addTeamMember_shouldAddTeamMemberSuccessfully() {
         Long userId = 1L;
-        NewTeamMemberDto newTeamMemberDto = new NewTeamMemberDto(10L, 2L, TeamMemberRole.MEMBER);
+        Long eventId = 10L;
+        Long memberId = 2L;
+        NewTeamMemberDto newTeamMemberDto = new NewTeamMemberDto(eventId, memberId, TeamMemberRole.MEMBER);
+
         Event event = new Event();
-        event.setId(10L);
-        event.setOwnerId(1L);
+        event.setId(eventId);
+        event.setOwnerId(userId);
 
-        TeamMember teamMember = new TeamMember(new TeamMemberId(10L, 2L), TeamMemberRole.MEMBER);
-        TeamMemberDto expectedDto = new TeamMemberDto(10L, 2L, TeamMemberRole.MEMBER);
+        TeamMember teamMember = new TeamMember(new TeamMemberId(eventId, memberId), TeamMemberRole.MEMBER);
+        TeamMemberDto expectedDto = new TeamMemberDto(eventId, memberId, TeamMemberRole.MEMBER);
 
-        when(eventRepository.findById(10L)).thenReturn(Optional.of(event));
+        when(eventService.getEventByEventId(eventId, userId)).thenReturn(event);
         when(teamMemberMapper.toTeamMember(newTeamMemberDto)).thenReturn(teamMember);
         when(teamMemberRepository.save(teamMember)).thenReturn(teamMember);
         when(teamMemberMapper.toTeamMemberDto(teamMember)).thenReturn(expectedDto);
@@ -68,7 +71,6 @@ class TeamMemberServiceImplTest {
         TeamMemberDto result = teamMemberService.addTeamMember(userId, newTeamMemberDto);
 
         assertEquals(expectedDto, result);
-        verify(eventRepository, times(1)).findById(10L);
         verify(teamMemberRepository, times(1)).save(teamMember);
         verify(teamMemberMapper, times(1)).toTeamMemberDto(teamMember);
     }
@@ -76,15 +78,14 @@ class TeamMemberServiceImplTest {
     @Test
     void addTeamMember_shouldThrowExceptionWhenEventNotFound() {
         Long userId = 1L;
-        NewTeamMemberDto newTeamMemberDto = new NewTeamMemberDto(10L, 2L, TeamMemberRole.MEMBER);
-
-        when(eventRepository.findById(10L)).thenReturn(Optional.empty());
+        Long eventId = 10L;
+        Long memberId = 2L;
+        NewTeamMemberDto newTeamMemberDto = new NewTeamMemberDto(eventId, memberId, TeamMemberRole.MEMBER);
 
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> teamMemberService.addTeamMember(userId, newTeamMemberDto));
 
         assertEquals("Event id = 10 not found!", exception.getMessage());
-        verify(eventRepository, times(1)).findById(10L);
         verifyNoInteractions(teamMemberRepository, teamMemberMapper);
     }
 
@@ -136,10 +137,20 @@ class TeamMemberServiceImplTest {
                 memberId,
                 TeamMemberRole.MANAGER
         );
+        Event event = Event.builder()
+                .id(eventId)
+                .name("event")
+                .description("event description")
+                .createdDateTime(null)
+                .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
+                .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
+                .location("location")
+                .ownerId(memberId)
+                .build();
 
+        when(eventService.getEventByEventId(eventId, userId)).thenReturn(event);
         UpdateTeamMemberDto updateTeamMemberDto = new UpdateTeamMemberDto(TeamMemberRole.MANAGER);
 
-        when(eventRepository.existsById(eventId)).thenReturn(true);
         when(teamMemberRepository.findByIdEventIdAndIdUserId(eventId, userId))
                 .thenReturn(Optional.of(new TeamMember(new TeamMemberId(eventId, userId), TeamMemberRole.MANAGER)));
         when(teamMemberRepository.findByIdEventIdAndIdUserId(eventId, memberId))
@@ -151,7 +162,6 @@ class TeamMemberServiceImplTest {
         TeamMemberDto result = teamMemberService.updateTeamMemberInEvent(userId, eventId, memberId, updateTeamMemberDto);
 
         assertEquals(teamMemberDto, result);
-        verify(eventRepository, times(1)).existsById(eventId);
         verify(teamMemberRepository, times(1)).findByIdEventIdAndIdUserId(eventId, userId);
         verify(teamMemberRepository, times(1)).findByIdEventIdAndIdUserId(eventId, memberId);
         verify(teamMemberRepository, times(1)).save(teamMember);
@@ -167,15 +177,12 @@ class TeamMemberServiceImplTest {
 
         UpdateTeamMemberDto updateTeamMemberDto = new UpdateTeamMemberDto(TeamMemberRole.MANAGER);
 
-        when(eventRepository.existsById(eventId)).thenReturn(false);
-
         NotFoundException exception = assertThrows(
                 NotFoundException.class,
                 () -> teamMemberService.updateTeamMemberInEvent(userId, eventId, memberId, updateTeamMemberDto)
         );
 
         assertEquals(String.format("Event id = %d not found!", eventId), exception.getMessage());
-        verify(eventRepository, times(1)).existsById(eventId);
         verifyNoMoreInteractions(teamMemberRepository, teamMemberMapper);
     }
 
@@ -184,10 +191,21 @@ class TeamMemberServiceImplTest {
         Long userId = 1L;
         Long eventId = 10L;
         Long memberId = 2L;
+        Event event = Event.builder()
+                .id(eventId)
+                .name("event")
+                .description("event description")
+                .createdDateTime(null)
+                .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
+                .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
+                .location("location")
+                .ownerId(memberId)
+                .build();
+
+        when(eventService.getEventByEventId(eventId, userId)).thenReturn(event);
 
         UpdateTeamMemberDto updateTeamMemberDto = new UpdateTeamMemberDto(TeamMemberRole.MANAGER);
 
-        when(eventRepository.existsById(eventId)).thenReturn(true);
         when(teamMemberRepository.findByIdEventIdAndIdUserId(eventId, userId))
                 .thenReturn(Optional.of(new TeamMember(new TeamMemberId(eventId, userId), TeamMemberRole.MANAGER)));
         when(teamMemberRepository.findByIdEventIdAndIdUserId(eventId, memberId)).thenReturn(Optional.empty());
@@ -198,7 +216,6 @@ class TeamMemberServiceImplTest {
         );
 
         assertEquals(String.format("Team member id = %d in team event id = %d", memberId, eventId), exception.getMessage());
-        verify(eventRepository, times(1)).existsById(eventId);
         verify(teamMemberRepository, times(1)).findByIdEventIdAndIdUserId(eventId, userId);
         verify(teamMemberRepository, times(1)).findByIdEventIdAndIdUserId(eventId, memberId);
         verifyNoMoreInteractions(teamMemberMapper);
@@ -209,12 +226,25 @@ class TeamMemberServiceImplTest {
         Long userId = 1L;
         Long eventId = 10L;
         Long memberId = 2L;
+        Event event = Event.builder()
+                .id(eventId)
+                .name("event")
+                .description("event description")
+                .createdDateTime(null)
+                .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
+                .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
+                .location("location")
+                .ownerId(memberId)
+                .build();
 
         UpdateTeamMemberDto updateTeamMemberDto = new UpdateTeamMemberDto(TeamMemberRole.MANAGER);
 
-        when(eventRepository.existsById(eventId)).thenReturn(true);
+        when(eventService.getEventByEventId(eventId, userId)).thenReturn(event);
+        when(teamMemberRepository.findByIdEventIdAndIdUserId(eventId, memberId))
+                .thenReturn(Optional.of(new TeamMember(new TeamMemberId(eventId, userId), TeamMemberRole.MEMBER)));
         when(teamMemberRepository.findByIdEventIdAndIdUserId(eventId, userId))
                 .thenReturn(Optional.of(new TeamMember(new TeamMemberId(eventId, userId), TeamMemberRole.MEMBER)));
+
 
         NotAuthorizedException exception = assertThrows(
                 NotAuthorizedException.class,
@@ -222,7 +252,7 @@ class TeamMemberServiceImplTest {
         );
 
         assertEquals(String.format("User id = %d in event id = %d not Manager", userId, eventId), exception.getMessage());
-        verify(eventRepository, times(1)).existsById(eventId);
+        verify(eventService, times(1)).getEventByEventId(eventId, userId);
         verify(teamMemberRepository, times(1)).findByIdEventIdAndIdUserId(eventId, userId);
         verifyNoMoreInteractions(teamMemberMapper);
     }
@@ -232,10 +262,20 @@ class TeamMemberServiceImplTest {
         Long userId = 1L;
         Long eventId = 10L;
         Long memberId = 2L;
+        Event event = Event.builder()
+                .id(eventId)
+                .name("event")
+                .description("event description")
+                .createdDateTime(null)
+                .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
+                .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
+                .location("location")
+                .ownerId(memberId)
+                .build();
         TeamMember teamMember = new TeamMember(new TeamMemberId(eventId, memberId), TeamMemberRole.MEMBER);
         TeamMember teamManager = new TeamMember(new TeamMemberId(eventId, userId), TeamMemberRole.MANAGER);
 
-        when(eventRepository.existsById(eventId)).thenReturn(true);
+        when(eventService.getEventByEventId(eventId, userId)).thenReturn(event);
         when(teamMemberRepository.findByIdEventIdAndIdUserId(eventId, memberId)).thenReturn(Optional.of(teamMember));
         when(teamMemberRepository.findByIdEventIdAndIdUserId(eventId, userId)).thenReturn(Optional.of(teamManager));
 
@@ -251,8 +291,18 @@ class TeamMemberServiceImplTest {
         Long userId = 1L;
         Long eventId = 10L;
         Long memberId = 2L;
+        Event event = Event.builder()
+                .id(eventId)
+                .name("event")
+                .description("event description")
+                .createdDateTime(null)
+                .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
+                .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
+                .location("location")
+                .ownerId(memberId)
+                .build();
 
-        when(eventRepository.existsById(eventId)).thenReturn(true);
+        when(eventService.getEventByEventId(eventId, userId)).thenReturn(event);
         when(teamMemberRepository.findByIdEventIdAndIdUserId(eventId, memberId)).thenReturn(Optional.empty());
 
         NotFoundException exception = assertThrows(NotFoundException.class,
