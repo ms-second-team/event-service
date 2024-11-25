@@ -1,7 +1,7 @@
-package meetup.event.dto;
+package meetup.event.dto.teammember;
 
 import jakarta.validation.constraints.NotNull;
-import meetup.event.model.TeamMemberRole;
+import meetup.event.model.teammember.TeamMemberRole;
 
 public record NewTeamMemberDto(
         @NotNull(message = "Event ID cannot be null")

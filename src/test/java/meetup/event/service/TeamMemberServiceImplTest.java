@@ -1,13 +1,14 @@
 package meetup.event.service;
 
-import meetup.event.dto.NewTeamMemberDto;
-import meetup.event.dto.TeamMemberDto;
-import meetup.event.dto.UpdateTeamMemberDto;
+import meetup.event.dto.teammember.NewTeamMemberDto;
+import meetup.event.dto.teammember.TeamMemberDto;
+import meetup.event.dto.teammember.UpdateTeamMemberDto;
 import meetup.event.mapper.TeamMemberMapper;
-import meetup.event.model.Event;
-import meetup.event.model.TeamMember;
-import meetup.event.model.TeamMemberId;
-import meetup.event.model.TeamMemberRole;
+import meetup.event.model.event.Event;
+import meetup.event.model.teammember.TeamMember;
+import meetup.event.model.teammember.TeamMemberId;
+import meetup.event.model.teammember.TeamMemberRole;
+import meetup.event.repository.EventRepository;
 import meetup.event.repository.TeamMemberRepository;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
@@ -24,6 +25,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,6 +36,9 @@ import static org.mockito.Mockito.when;
 class TeamMemberServiceImplTest {
     @Mock
     private TeamMemberRepository teamMemberRepository;
+
+    @Mock
+    private EventRepository repository;
 
     @Mock
     private TeamMemberMapper teamMemberMapper;
@@ -65,13 +70,12 @@ class TeamMemberServiceImplTest {
 
         when(eventService.getEventByEventId(eventId, userId)).thenReturn(event);
         when(teamMemberMapper.toTeamMember(newTeamMemberDto)).thenReturn(teamMember);
-        when(teamMemberRepository.save(teamMember)).thenReturn(teamMember);
+        when(teamMemberRepository.save(any())).thenReturn(teamMember);
         when(teamMemberMapper.toTeamMemberDto(teamMember)).thenReturn(expectedDto);
 
         TeamMemberDto result = teamMemberService.addTeamMember(userId, newTeamMemberDto);
 
         assertEquals(expectedDto, result);
-        verify(teamMemberRepository, times(1)).save(teamMember);
         verify(teamMemberMapper, times(1)).toTeamMemberDto(teamMember);
     }
 
@@ -81,7 +85,8 @@ class TeamMemberServiceImplTest {
         Long eventId = 10L;
         Long memberId = 2L;
         NewTeamMemberDto newTeamMemberDto = new NewTeamMemberDto(eventId, memberId, TeamMemberRole.MEMBER);
-
+        when(eventService.getEventByEventId(eventId, userId))
+                .thenThrow(new NotFoundException("Event id = 10 not found!"));
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> teamMemberService.addTeamMember(userId, newTeamMemberDto));
 
@@ -118,7 +123,6 @@ class TeamMemberServiceImplTest {
 
         assertTrue(result.isEmpty());
         verify(teamMemberRepository, times(1)).findAllByIdEventId(eventId);
-        verifyNoInteractions(teamMemberMapper);
     }
 
 
@@ -175,8 +179,10 @@ class TeamMemberServiceImplTest {
         Long eventId = 10L;
         Long memberId = 2L;
 
-        UpdateTeamMemberDto updateTeamMemberDto = new UpdateTeamMemberDto(TeamMemberRole.MANAGER);
 
+        UpdateTeamMemberDto updateTeamMemberDto = new UpdateTeamMemberDto(TeamMemberRole.MANAGER);
+        when(eventService.getEventByEventId(eventId, userId))
+                .thenThrow(new NotFoundException(String.format("Event id = %d not found!", eventId)));
         NotFoundException exception = assertThrows(
                 NotFoundException.class,
                 () -> teamMemberService.updateTeamMemberInEvent(userId, eventId, memberId, updateTeamMemberDto)
@@ -215,7 +221,7 @@ class TeamMemberServiceImplTest {
                 () -> teamMemberService.updateTeamMemberInEvent(userId, eventId, memberId, updateTeamMemberDto)
         );
 
-        assertEquals(String.format("Team member id = %d in team event id = %d", memberId, eventId), exception.getMessage());
+        assertEquals(String.format("Team member id = %d is not in team event id = %d", memberId, eventId), exception.getMessage());
         verify(teamMemberRepository, times(1)).findByIdEventIdAndIdUserId(eventId, userId);
         verify(teamMemberRepository, times(1)).findByIdEventIdAndIdUserId(eventId, memberId);
         verifyNoMoreInteractions(teamMemberMapper);
@@ -308,6 +314,6 @@ class TeamMemberServiceImplTest {
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> teamMemberService.deleteTeamMemberFromEvent(userId, eventId, memberId));
 
-        assertEquals("Team member id = 1 in team event id = 10", exception.getMessage());
+        assertEquals("Team member id = 1 is not in team event id = 10", exception.getMessage());
     }
 }

@@ -2,9 +2,9 @@ package meetup.event.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import meetup.event.dto.UpdatedEventDto;
+import meetup.event.dto.event.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
-import meetup.event.model.Event;
+import meetup.event.model.event.Event;
 import meetup.event.repository.EventRepository;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;

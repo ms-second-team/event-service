@@ -1,7 +1,7 @@
 package meetup.event.repository;
 
-import meetup.event.model.TeamMember;
-import meetup.event.model.TeamMemberId;
+import meetup.event.model.teammember.TeamMember;
+import meetup.event.model.teammember.TeamMemberId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,15 +1,15 @@
 package meetup.event.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import meetup.event.dto.EventDto;
-import meetup.event.dto.NewEventDto;
-import meetup.event.dto.NewTeamMemberDto;
-import meetup.event.dto.TeamMemberDto;
-import meetup.event.dto.UpdateTeamMemberDto;
-import meetup.event.dto.UpdatedEventDto;
+import meetup.event.dto.event.EventDto;
+import meetup.event.dto.event.NewEventDto;
+import meetup.event.dto.event.UpdatedEventDto;
+import meetup.event.dto.teammember.NewTeamMemberDto;
+import meetup.event.dto.teammember.TeamMemberDto;
+import meetup.event.dto.teammember.UpdateTeamMemberDto;
 import meetup.event.mapper.EventMapper;
-import meetup.event.model.Event;
-import meetup.event.model.TeamMemberRole;
+import meetup.event.model.event.Event;
+import meetup.event.model.teammember.TeamMemberRole;
 import meetup.event.service.EventService;
 import meetup.event.service.TeamMemberService;
 import org.junit.jupiter.api.Assertions;
@@ -126,8 +126,8 @@ class EventControllerTest {
                 .andExpect(jsonPath("$.id", is(eventDto.id()), Long.class))
                 .andExpect(jsonPath("$.name", is(eventDto.name())))
                 .andExpect(jsonPath("$.description", is(eventDto.description())))
-                .andExpect(jsonPath("$.startDateTime", is("2024-12-26T18:00:00")))
-                .andExpect(jsonPath("$.endDateTime", is("2024-12-26T22:00:00")))
+                .andExpect(jsonPath("$.startDateTime", is("2024-12-26 18:00:00")))
+                .andExpect(jsonPath("$.endDateTime", is("2024-12-26 22:00:00")))
                 .andExpect(jsonPath("$.location", is("location")))
                 .andExpect(jsonPath("$.ownerId", is(event.getOwnerId()), Long.class));
 
@@ -316,8 +316,8 @@ class EventControllerTest {
                 .andExpect(jsonPath("$.id", is(eventDto.id()), Long.class))
                 .andExpect(jsonPath("$.name", is(eventDto.name())))
                 .andExpect(jsonPath("$.description", is(eventDto.description())))
-                .andExpect(jsonPath("$.startDateTime", is("2024-12-26T18:00:00")))
-                .andExpect(jsonPath("$.endDateTime", is("2024-12-26T22:00:00")))
+                .andExpect(jsonPath("$.startDateTime", is("2024-12-26 18:00:00")))
+                .andExpect(jsonPath("$.endDateTime", is("2024-12-26 22:00:00")))
                 .andExpect(jsonPath("$.location", is("location")))
                 .andExpect(jsonPath("$.ownerId", is(event.getOwnerId()), Long.class));
 
@@ -388,8 +388,8 @@ class EventControllerTest {
                 .andExpect(jsonPath("$.id", is(eventDto.id()), Long.class))
                 .andExpect(jsonPath("$.name", is(eventDto.name())))
                 .andExpect(jsonPath("$.description", is(eventDto.description())))
-                .andExpect(jsonPath("$.startDateTime", is("2024-12-26T18:00:00")))
-                .andExpect(jsonPath("$.endDateTime", is("2024-12-26T22:00:00")))
+                .andExpect(jsonPath("$.startDateTime", is("2024-12-26 18:00:00")))
+                .andExpect(jsonPath("$.endDateTime", is("2024-12-26 22:00:00")))
                 .andExpect(jsonPath("$.location", is("location")))
                 .andExpect(jsonPath("$.ownerId", is(event.getOwnerId()), Long.class));
 

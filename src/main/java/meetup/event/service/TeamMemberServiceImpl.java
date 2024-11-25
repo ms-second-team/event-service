@@ -2,13 +2,14 @@ package meetup.event.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import meetup.event.dto.NewTeamMemberDto;
-import meetup.event.dto.TeamMemberDto;
-import meetup.event.dto.UpdateTeamMemberDto;
+import meetup.event.dto.teammember.NewTeamMemberDto;
+import meetup.event.dto.teammember.TeamMemberDto;
+import meetup.event.dto.teammember.UpdateTeamMemberDto;
 import meetup.event.mapper.TeamMemberMapper;
-import meetup.event.model.Event;
-import meetup.event.model.TeamMember;
-import meetup.event.model.TeamMemberRole;
+import meetup.event.model.event.Event;
+import meetup.event.model.teammember.TeamMember;
+import meetup.event.model.teammember.TeamMemberId;
+import meetup.event.model.teammember.TeamMemberRole;
 import meetup.event.repository.TeamMemberRepository;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
@@ -27,7 +28,12 @@ public class TeamMemberServiceImpl implements TeamMemberService {
     @Override
     public TeamMemberDto addTeamMember(Long userId, NewTeamMemberDto newTeamMemberDto) {
         checkTeamMemberManagerOrOwnerRoleInEvent(newTeamMemberDto.eventId(), userId);
-        TeamMember teamMember = teamMemberRepository.save(teamMemberMapper.toTeamMember(newTeamMemberDto));
+        TeamMemberId teamMemberId = new TeamMemberId(newTeamMemberDto.eventId(), newTeamMemberDto.userId());
+        TeamMember teamMember = TeamMember.builder()
+                .id(teamMemberId)
+                .role(newTeamMemberDto.role())
+                .build();
+        teamMember = teamMemberRepository.save(teamMember);
         log.info("Member id = '{}' was added to team event id = '{}' by user id = '{}'",
                 teamMember.getId().getUserId(), teamMember.getId().getEventId(), userId);
         return teamMemberMapper.toTeamMemberDto(teamMember);
@@ -35,11 +41,9 @@ public class TeamMemberServiceImpl implements TeamMemberService {
 
     @Override
     public List<TeamMemberDto> getTeamsByEventId(Long userId, Long eventId) {
+        Event event = eventService.getEventByEventId(eventId, userId);
         List<TeamMember> teamMembers = teamMemberRepository.findAllByIdEventId(eventId);
         log.debug("Found '{}' team members by event id = '{}' by user id ='{}'", teamMembers.size(), eventId, userId);
-        if (teamMembers.isEmpty()) {
-            return List.of();
-        }
         return teamMemberMapper.toTeamMemberDtoList(teamMembers);
     }
 
@@ -63,15 +67,13 @@ public class TeamMemberServiceImpl implements TeamMemberService {
 
     private TeamMember getTeamMember(Long eventId, Long memberId) {
         return teamMemberRepository.findByIdEventIdAndIdUserId(eventId, memberId).orElseThrow(
-                () -> new NotFoundException(String.format("Team member id = %d in team event id = %d", memberId, eventId))
+                () -> new NotFoundException(String.format("Team member id = %d is not in team event id = %d", memberId, eventId))
         );
     }
 
     private void checkTeamMemberManagerOrOwnerRoleInEvent(Long eventId, Long memberId) {
         Event event = eventService.getEventByEventId(eventId, memberId);
-        if (event == null) {
-            throw new NotFoundException("Event id = " + eventId + " not found!");
-        } else if (!event.getOwnerId().equals(memberId)) {
+        if (!event.getOwnerId().equals(memberId)) {
             TeamMember user = getTeamMember(eventId, memberId);
             if (!user.getRole().equals(TeamMemberRole.MANAGER)) {
                 throw new NotAuthorizedException(String.format("User id = %d in event id = %d not Manager", memberId, eventId));

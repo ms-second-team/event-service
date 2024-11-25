@@ -1,4 +1,4 @@
-package meetup.event.model;
+package meetup.event.model.event;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

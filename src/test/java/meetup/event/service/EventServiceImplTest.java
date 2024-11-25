@@ -1,9 +1,9 @@
 package meetup.event.service;
 
 import meetup.EventServiceApplication;
-import meetup.event.dto.UpdatedEventDto;
+import meetup.event.dto.event.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
-import meetup.event.model.Event;
+import meetup.event.model.event.Event;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
 import org.junit.jupiter.api.Test;

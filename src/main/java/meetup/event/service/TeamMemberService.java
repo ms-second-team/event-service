@@ -1,8 +1,8 @@
 package meetup.event.service;
 
-import meetup.event.dto.NewTeamMemberDto;
-import meetup.event.dto.TeamMemberDto;
-import meetup.event.dto.UpdateTeamMemberDto;
+import meetup.event.dto.teammember.NewTeamMemberDto;
+import meetup.event.dto.teammember.TeamMemberDto;
+import meetup.event.dto.teammember.UpdateTeamMemberDto;
 
 import java.util.List;
 

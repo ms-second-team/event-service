@@ -1,4 +1,4 @@
-package meetup.event.model;
+package meetup.event.model.teammember;
 
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
