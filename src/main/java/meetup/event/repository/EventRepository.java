@@ -1,6 +1,6 @@
 package meetup.event.repository;
 
-import meetup.event.model.Event;
+import meetup.event.model.event.Event;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

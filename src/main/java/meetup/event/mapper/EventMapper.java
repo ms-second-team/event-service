@@ -1,9 +1,9 @@
 package meetup.event.mapper;
 
-import meetup.event.dto.EventDto;
-import meetup.event.dto.NewEventDto;
-import meetup.event.dto.UpdatedEventDto;
-import meetup.event.model.Event;
+import meetup.event.dto.event.EventDto;
+import meetup.event.dto.event.NewEventDto;
+import meetup.event.dto.event.UpdatedEventDto;
+import meetup.event.model.event.Event;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
