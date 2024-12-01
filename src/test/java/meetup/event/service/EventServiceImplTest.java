@@ -56,6 +56,7 @@ class EventServiceImplTest {
             .startDateTime(LocalDateTime.of(2024, 12, 27, 19, 0, 0))
             .endDateTime(LocalDateTime.of(2024, 12, 27, 23, 0, 0))
             .location("updated location")
+            .participantLimit(10)
             .build();
 
     @Test
@@ -66,6 +67,7 @@ class EventServiceImplTest {
 
         assertEquals(receivedEvent.getLocation(), savedEvent.getLocation());
         assertEquals(receivedEvent.getOwnerId(), userId);
+        assertEquals(0, receivedEvent.getParticipantLimit());
     }
 
     @Test
@@ -105,6 +107,7 @@ class EventServiceImplTest {
         assertEquals(updatedEventDto.endDateTime(), updatedEvent.getEndDateTime());
         assertEquals(updatedEvent.getLocation(), updatedEventDto.location());
         assertEquals(savedEvent.getOwnerId(), updatedEvent.getOwnerId());
+        assertEquals(updatedEventDto.participantLimit(), updatedEvent.getParticipantLimit());
     }
 
     @Test
