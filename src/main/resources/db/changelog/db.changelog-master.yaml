@@ -24,3 +24,12 @@ databaseChangeLog:
             dbms: postgresql
             path: changeset/003_team_members_add_on_delete_cascade.sql
             relativeToChangelogFile: true
+
+  - changeSet:
+      id: 4
+      author: vbakhanovich
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: changeset/004_add_participant_limit.sql
+            relativeToChangelogFile: true
