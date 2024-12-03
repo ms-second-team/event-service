@@ -1,5 +1,11 @@
 package meetup.event.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -15,6 +21,7 @@ import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
 import meetup.event.service.EventService;
 import meetup.event.service.TeamMemberService;
+import meetup.exception.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,6 +47,18 @@ public class EventController {
     private final EventMapper eventMapper;
     private static final String HEADER_X_USER_ID = "X-User-Id";
 
+    @Operation(summary = "Create new event")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "New event was created", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = EventDto.class))
+            }),
+            @ApiResponse(responseCode = "400", description = "Validation exception", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "500", description = "Unknown exception", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            })
+    })
     @PostMapping
     public ResponseEntity<EventDto> createEvent(@RequestHeader(HEADER_X_USER_ID) Long userId,
                                                 @RequestBody @Valid NewEventDto newEventDto) {
@@ -53,6 +72,24 @@ public class EventController {
         return new ResponseEntity<>(eventDto, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Update event")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Event was updated", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = EventDto.class))
+            }),
+            @ApiResponse(responseCode = "400", description = "Validation exception", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "403", description = "User is not the owner", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "404", description = "Event not found", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "500", description = "Unknown exception", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            })
+    })
     @PatchMapping("/{id}")
     public ResponseEntity<EventDto> updateEvent(@RequestHeader(HEADER_X_USER_ID) Long userId,
                                                 @PathVariable Long id,
@@ -67,6 +104,19 @@ public class EventController {
         return new ResponseEntity<>(eventDto, HttpStatus.OK);
     }
 
+    @Operation(summary = "Find event by id",
+            description = "Find event by id. Event creation datetime is shown only when requester is the owner")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Event was retrieved", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = EventDto.class))
+            }),
+            @ApiResponse(responseCode = "404", description = "Event not found", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "500", description = "Unknown error", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            })
+    })
     @GetMapping("/{id}")
     public ResponseEntity<EventDto> getEventById(@RequestHeader(HEADER_X_USER_ID) Long userId,
                                                  @PathVariable Long id) {
@@ -79,6 +129,18 @@ public class EventController {
         return new ResponseEntity<>(eventDto, HttpStatus.OK);
     }
 
+    @Operation(summary = "Find events by owner",
+            description = "Find events by owner with pagination")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Events were retrieved", content = {
+                    @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = EventDto.class)))
+            }),
+            @ApiResponse(responseCode = "500", description = "Unknown error", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            })
+    })
     @GetMapping
     public ResponseEntity<List<EventDto>> getEvents(@RequestParam(required = false) Long userId,
                                                     @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
@@ -92,6 +154,20 @@ public class EventController {
         return new ResponseEntity<>(eventsDto, HttpStatus.OK);
     }
 
+    @Operation(summary = "Delete event by id",
+            description = "Delete event by id, Only owner is authorized")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Event was deleted"),
+            @ApiResponse(responseCode = "403", description = "User is not the owner", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "404", description = "Event not found", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "500", description = "Unknown error", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            })
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEventById(@RequestHeader(HEADER_X_USER_ID) Long userId,
                                                 @PathVariable Long id) {
@@ -103,6 +179,22 @@ public class EventController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @Operation(summary = "Add team member",
+            description = "Add team member to event by owner or manager")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Team member was added", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = TeamMemberDto.class))
+            }),
+            @ApiResponse(responseCode = "403", description = "User is not the owner or manager of event", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "404", description = "Team member or event not found", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "500", description = "Unknown error", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            })
+    })
     @PostMapping("/teams")
     public ResponseEntity<TeamMemberDto> addTeamMember(
             @RequestHeader(HEADER_X_USER_ID) Long userId,
@@ -113,6 +205,20 @@ public class EventController {
         return new ResponseEntity<>(teamMemberDto, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Get team members by event id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Team members were retrieved", content = {
+                    @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = TeamMemberDto.class)))
+            }),
+            @ApiResponse(responseCode = "404", description = "Event was not found", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "500", description = "Unknown error", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            })
+    })
     @GetMapping("/teams/{eventId}")
     public ResponseEntity<List<TeamMemberDto>> getTeamsByEventId(
             @RequestHeader(HEADER_X_USER_ID) Long userId,
@@ -122,6 +228,22 @@ public class EventController {
         return new ResponseEntity<>(teamMemberDtos, HttpStatus.OK);
     }
 
+    @Operation(summary = "Update team member in event",
+            description = "Change team members role")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Team member was updated", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = TeamMemberDto.class))
+            }),
+            @ApiResponse(responseCode = "403", description = "User is not the owner or manager of event", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "404", description = "Team member or event not found", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "500", description = "Unknown error", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            })
+    })
     @PatchMapping("/teams/{eventId}/{memberId}")
     public ResponseEntity<TeamMemberDto> updateTeamMemberInEvent(
             @RequestHeader(HEADER_X_USER_ID) Long userId,
@@ -133,6 +255,20 @@ public class EventController {
         return new ResponseEntity<>(teamMemberDto, HttpStatus.OK);
     }
 
+    @Operation(summary = "Delete team member from event",
+            description = "Delete team member from event, Only owner or manager is authorized")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Team member was deleted"),
+            @ApiResponse(responseCode = "403", description = "User is not the owner or manager", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "404", description = "Event or team member was not found", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
+            @ApiResponse(responseCode = "500", description = "Unknown error", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            })
+    })
     @DeleteMapping("/teams/{eventId}/{memberId}")
     public ResponseEntity<Void> deleteTeamMemberFromEvent(
             @RequestHeader(HEADER_X_USER_ID) Long userId,
