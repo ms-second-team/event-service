@@ -3,7 +3,7 @@ name: Push to docker
 on:
   push:
     branches:
-      - dev
+      - develop
 
 jobs:
   docker:
