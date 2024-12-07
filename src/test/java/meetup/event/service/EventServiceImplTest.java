@@ -137,7 +137,14 @@ class EventServiceImplTest {
     }
 
     @Test
-    void updateEvent() {
+    void updateEvent() throws JsonProcessingException {
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
         Event savedEvent = eventService.createEvent(userId, event);
 
         Event updatedEvent = eventService.updateEvent(userId, savedEvent.getId(), updatedEventDto);
@@ -154,8 +161,16 @@ class EventServiceImplTest {
     }
 
     @Test
-    void updateNonExistEvent() {
+    void updateNonExistEvent() throws JsonProcessingException {
         Long eventId = 777L;
+
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
         Event savedEvent = eventService.createEvent(userId, event);
 
         NotFoundException thrown = assertThrows(
@@ -212,7 +227,14 @@ class EventServiceImplTest {
     }
 
     @Test
-    void getEventByEventIdByOwner() {
+    void getEventByEventIdByOwner() throws JsonProcessingException {
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
         Event savedEvent = eventService.createEvent(userId, event);
 
         Event receivedEvent = eventService.getEventByEventId(savedEvent.getId(), userId);
@@ -263,7 +285,14 @@ class EventServiceImplTest {
     }
 
     @Test
-    void getEventsWithoutUserId() {
+    void getEventsWithoutUserId() throws JsonProcessingException {
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
         eventService.createEvent(userId, event);
 
         List<Event> eventList = eventService.getEvents(0, 10, null);
@@ -274,7 +303,6 @@ class EventServiceImplTest {
     @Test
     void deleteEventById() throws JsonProcessingException {
         UserDto userDto = createUser(userId);
-
         stubFor(get(urlEqualTo("/users/" + userId))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
@@ -308,8 +336,16 @@ class EventServiceImplTest {
     }
 
     @Test
-    void deleteEventByOtherUser() {
+    void deleteEventByOtherUser() throws JsonProcessingException {
         Long otherUserId = 777L;
+
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
         Event savedEvent = eventService.createEvent(userId, event);
 
         NotAuthorizedException thrown = assertThrows(
