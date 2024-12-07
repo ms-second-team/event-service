@@ -19,8 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -74,7 +72,7 @@ class TeamMemberServiceImplTest {
         when(teamMemberMapper.toTeamMember(newTeamMemberDto)).thenReturn(teamMember);
         UserDto userDto = createUser(memberId);
         when(userClient.getUserById(anyLong(), anyLong()))
-                .thenReturn(new ResponseEntity<>(userDto, HttpStatus.OK));
+                .thenReturn(userDto);
 
         when(teamMemberRepository.save(any())).thenReturn(teamMember);
         when(teamMemberMapper.toTeamMemberDto(teamMember)).thenReturn(expectedDto);
@@ -93,7 +91,7 @@ class TeamMemberServiceImplTest {
 
         UserDto userDto = createUser(userId);
         when(userClient.getUserById(userId, userId))
-                .thenReturn(new ResponseEntity<>(userDto, HttpStatus.OK));
+                .thenReturn(userDto);
 
         when(eventService.getEventByEventId(eventId, userId))
                 .thenThrow(new NotFoundException("Event id = 10 not found!"));
@@ -102,6 +100,40 @@ class TeamMemberServiceImplTest {
                 () -> teamMemberService.addTeamMember(userId, newTeamMemberDto));
 
         assertEquals("Event id = 10 not found!", exception.getMessage());
+        verifyNoInteractions(teamMemberRepository, teamMemberMapper);
+    }
+
+    @Test
+    void addTeamMember_shouldThrowExceptionWhenUserNotFound() {
+        Long userId = 10L;
+        Long eventId = 10L;
+        Long memberId = 12L;
+        NewTeamMemberDto newTeamMemberDto = new NewTeamMemberDto(eventId, memberId, TeamMemberRole.MEMBER);
+
+        when(userClient.getUserById(userId, userId))
+                .thenThrow(new NotFoundException("User was not found!"));
+
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> teamMemberService.addTeamMember(userId, newTeamMemberDto));
+
+        assertEquals("User was not found!", exception.getMessage());
+        verifyNoInteractions(teamMemberRepository, teamMemberMapper);
+    }
+
+    @Test
+    void addTeamMember_shouldThrowExceptionWhenMemberNotFound() {
+        Long userId = 10L;
+        Long eventId = 10L;
+        Long memberId = 12L;
+        NewTeamMemberDto newTeamMemberDto = new NewTeamMemberDto(eventId, memberId, TeamMemberRole.MEMBER);
+
+        when(userClient.getUserById(userId, memberId))
+                .thenThrow(new NotFoundException("User was not found!"));
+
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> teamMemberService.addTeamMember(userId, newTeamMemberDto));
+
+        assertEquals("User was not found!", exception.getMessage());
         verifyNoInteractions(teamMemberRepository, teamMemberMapper);
     }
 

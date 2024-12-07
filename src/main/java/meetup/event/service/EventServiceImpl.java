@@ -32,8 +32,8 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public Event createEvent(Long userId, Event event) {
+        checkUserExists(userId, userId);
         checkStartAndEndDateTime(event.getStartDateTime(), event.getEndDateTime());
-        UserDto userDto = userClient.getUserById(userId, userId).getBody();
         event.setOwnerId(userId);
 
         Event eventSaved = eventRepository.save(event);
@@ -108,6 +108,10 @@ public class EventServiceImpl implements EventService {
         if (end.isBefore(start)) {
             throw new DateTimeException("End dateTime: " + end + " is befofe start dateTime: " + start);
         }
+    }
+
+    private void checkUserExists(Long userId, Long ownerId) {
+        UserDto userDto = userClient.getUserById(userId, ownerId);
     }
 
 }

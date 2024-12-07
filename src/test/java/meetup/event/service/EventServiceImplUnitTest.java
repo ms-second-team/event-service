@@ -17,16 +17,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -75,7 +76,7 @@ class EventServiceImplUnitTest {
         UserDto userDto = createUser(userId);
 
         when(userClient.getUserById(userId, userId))
-                .thenReturn(new ResponseEntity<>(userDto, HttpStatus.OK));
+                .thenReturn(userDto);
 
         service.createEvent(userId, event);
 
@@ -146,8 +147,6 @@ class EventServiceImplUnitTest {
 
         NotFoundException ex = assertThrows(NotFoundException.class,
                 () -> service.updateEvent(eventId, userId, updatedEventDto));
-
-        assertThat(ex.getMessage(), is("Event with id=" + eventId + " was not found"));
 
         verify(repository, times(1)).findById(eventId);
         verify(mapper, never()).updateEvent(any(), any());

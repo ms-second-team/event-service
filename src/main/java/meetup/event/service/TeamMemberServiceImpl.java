@@ -30,10 +30,10 @@ public class TeamMemberServiceImpl implements TeamMemberService {
 
     @Override
     public TeamMemberDto addTeamMember(Long userId, NewTeamMemberDto newTeamMemberDto) {
-        UserDto userDto = userClient.getUserById(userId, userId).getBody();
+        checkUserExists(userId, userId);
+        checkUserExists(userId, newTeamMemberDto.userId());
         checkTeamMemberManagerOrOwnerRoleInEvent(newTeamMemberDto.eventId(), userId);
         TeamMemberId teamMemberId = new TeamMemberId(newTeamMemberDto.eventId(), newTeamMemberDto.userId());
-        UserDto teamMemberDto = userClient.getUserById(userId, teamMemberId.getUserId()).getBody();
         TeamMember teamMember = TeamMember.builder()
                 .id(teamMemberId)
                 .role(newTeamMemberDto.role())
@@ -85,4 +85,9 @@ public class TeamMemberServiceImpl implements TeamMemberService {
             }
         }
     }
+
+    private void checkUserExists(Long userId, Long memberId) {
+        UserDto userDto = userClient.getUserById(userId, memberId);
+    }
+
 }

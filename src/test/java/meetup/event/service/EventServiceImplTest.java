@@ -11,6 +11,7 @@ import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -119,6 +120,20 @@ class EventServiceImplTest {
 
         assertEquals("End dateTime: " + event.getEndDateTime() + " is befofe start dateTime: "
                 + event.getStartDateTime(), thrown.getMessage());
+    }
+
+    @Test
+    void createEventWithNotExistUser() {
+
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withStatus(HttpStatus.NOT_FOUND.value())));
+
+        NotFoundException ex = Assert.assertThrows(NotFoundException.class,
+                () -> eventService.createEvent(userId, event));
+
+        assertEquals("User was not found", ex.getLocalizedMessage());
     }
 
     @Test
@@ -257,7 +272,15 @@ class EventServiceImplTest {
     }
 
     @Test
-    void deleteEventById() {
+    void deleteEventById() throws JsonProcessingException {
+        UserDto userDto = createUser(userId);
+
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
         Event savedEvent = eventService.createEvent(userId, event);
 
         eventService.deleteEventById(userId, savedEvent.getId());
