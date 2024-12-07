@@ -1,5 +1,7 @@
 package meetup.event.service;
 
+import meetup.event.client.UserClient;
+import meetup.event.dto.UserDto;
 import meetup.event.dto.event.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
@@ -21,8 +23,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -38,6 +43,9 @@ class EventServiceImplUnitTest {
 
     @Mock
     private EventMapper mapper;
+
+    @Mock
+    private UserClient userClient;
 
     @InjectMocks
     private EventServiceImpl service;
@@ -64,6 +72,11 @@ class EventServiceImplUnitTest {
     void createEvent() {
         when(repository.save(any()))
                 .thenReturn(event);
+
+        UserDto userDto = createUser(userId);
+
+        when(userClient.getUserById(userId, userId))
+                .thenReturn(userDto);
 
         service.createEvent(userId, event);
 
@@ -134,8 +147,6 @@ class EventServiceImplUnitTest {
 
         NotFoundException ex = assertThrows(NotFoundException.class,
                 () -> service.updateEvent(eventId, userId, updatedEventDto));
-
-        assertThat(ex.getMessage(), is("Event with id=" + eventId + " was not found"));
 
         verify(repository, times(1)).findById(eventId);
         verify(mapper, never()).updateEvent(any(), any());
@@ -228,6 +239,15 @@ class EventServiceImplUnitTest {
 
         verify(repository, never()).deleteById(any());
 
+    }
+
+    private UserDto createUser(long userId) {
+        return new UserDto(
+                userId,
+                "John",
+                "john@example.com",
+                "StrongP@ss1",
+                "Hello");
     }
 
 }

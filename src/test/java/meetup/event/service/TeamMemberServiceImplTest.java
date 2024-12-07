@@ -1,5 +1,7 @@
 package meetup.event.service;
 
+import meetup.event.client.UserClient;
+import meetup.event.dto.UserDto;
 import meetup.event.dto.teammember.NewTeamMemberDto;
 import meetup.event.dto.teammember.TeamMemberDto;
 import meetup.event.dto.teammember.UpdateTeamMemberDto;
@@ -26,12 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class TeamMemberServiceImplTest {
     @Mock
@@ -39,6 +36,9 @@ class TeamMemberServiceImplTest {
 
     @Mock
     private EventRepository repository;
+
+    @Mock
+    private UserClient userClient;
 
     @Mock
     private TeamMemberMapper teamMemberMapper;
@@ -70,11 +70,14 @@ class TeamMemberServiceImplTest {
 
         when(eventService.getEventByEventId(eventId, userId)).thenReturn(event);
         when(teamMemberMapper.toTeamMember(newTeamMemberDto)).thenReturn(teamMember);
+        UserDto userDto = createUser(memberId);
+        when(userClient.getUserById(anyLong(), anyLong()))
+                .thenReturn(userDto);
+
         when(teamMemberRepository.save(any())).thenReturn(teamMember);
         when(teamMemberMapper.toTeamMemberDto(teamMember)).thenReturn(expectedDto);
 
         TeamMemberDto result = teamMemberService.addTeamMember(userId, newTeamMemberDto);
-
         assertEquals(expectedDto, result);
         verify(teamMemberMapper, times(1)).toTeamMemberDto(teamMember);
     }
@@ -85,12 +88,52 @@ class TeamMemberServiceImplTest {
         Long eventId = 10L;
         Long memberId = 2L;
         NewTeamMemberDto newTeamMemberDto = new NewTeamMemberDto(eventId, memberId, TeamMemberRole.MEMBER);
+
+        UserDto userDto = createUser(userId);
+        when(userClient.getUserById(userId, userId))
+                .thenReturn(userDto);
+
         when(eventService.getEventByEventId(eventId, userId))
                 .thenThrow(new NotFoundException("Event id = 10 not found!"));
+
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> teamMemberService.addTeamMember(userId, newTeamMemberDto));
 
         assertEquals("Event id = 10 not found!", exception.getMessage());
+        verifyNoInteractions(teamMemberRepository, teamMemberMapper);
+    }
+
+    @Test
+    void addTeamMember_shouldThrowExceptionWhenUserNotFound() {
+        Long userId = 10L;
+        Long eventId = 10L;
+        Long memberId = 12L;
+        NewTeamMemberDto newTeamMemberDto = new NewTeamMemberDto(eventId, memberId, TeamMemberRole.MEMBER);
+
+        when(userClient.getUserById(userId, userId))
+                .thenThrow(new NotFoundException("User was not found!"));
+
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> teamMemberService.addTeamMember(userId, newTeamMemberDto));
+
+        assertEquals("User was not found!", exception.getMessage());
+        verifyNoInteractions(teamMemberRepository, teamMemberMapper);
+    }
+
+    @Test
+    void addTeamMember_shouldThrowExceptionWhenMemberNotFound() {
+        Long userId = 10L;
+        Long eventId = 10L;
+        Long memberId = 12L;
+        NewTeamMemberDto newTeamMemberDto = new NewTeamMemberDto(eventId, memberId, TeamMemberRole.MEMBER);
+
+        when(userClient.getUserById(userId, memberId))
+                .thenThrow(new NotFoundException("User was not found!"));
+
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> teamMemberService.addTeamMember(userId, newTeamMemberDto));
+
+        assertEquals("User was not found!", exception.getMessage());
         verifyNoInteractions(teamMemberRepository, teamMemberMapper);
     }
 
@@ -316,4 +359,14 @@ class TeamMemberServiceImplTest {
 
         assertEquals("Team member id = 1 is not in team event id = 10", exception.getMessage());
     }
+
+    private UserDto createUser(long userId) {
+        return new UserDto(
+                userId,
+                "John",
+                "john@example.com",
+                "StrongP@ss1",
+                "Hello");
+    }
+
 }

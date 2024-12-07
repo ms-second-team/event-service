@@ -2,6 +2,8 @@ package meetup.event.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import meetup.event.client.UserClient;
+import meetup.event.dto.UserDto;
 import meetup.event.dto.event.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
@@ -25,10 +27,12 @@ public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
+    private final UserClient userClient;
 
     @Override
     @Transactional
     public Event createEvent(Long userId, Event event) {
+        checkUserExists(userId, userId);
         checkStartAndEndDateTime(event.getStartDateTime(), event.getEndDateTime());
         event.setOwnerId(userId);
 
@@ -104,6 +108,10 @@ public class EventServiceImpl implements EventService {
         if (end.isBefore(start)) {
             throw new DateTimeException("End dateTime: " + end + " is befofe start dateTime: " + start);
         }
+    }
+
+    private void checkUserExists(Long userId, Long ownerId) {
+        UserDto userDto = userClient.getUserById(userId, ownerId);
     }
 
 }
