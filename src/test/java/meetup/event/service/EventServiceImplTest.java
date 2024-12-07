@@ -1,16 +1,25 @@
 package meetup.event.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.github.dockerjava.zerodep.shaded.org.apache.hc.core5.http.ContentType;
 import meetup.EventServiceApplication;
+import meetup.event.dto.UserDto;
 import meetup.event.dto.event.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -19,6 +28,7 @@ import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -27,6 +37,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest(classes = EventServiceApplication.class)
 @Testcontainers
+@AutoConfigureWireMock(port = 0)
+@TestPropertySource(properties = {
+        "app.user-service.url=localhost:${wiremock.server.port}"
+})
 class EventServiceImplTest {
     @Container
     @ServiceConnection
@@ -37,7 +51,7 @@ class EventServiceImplTest {
 
     @Autowired
     EventService eventService;
-
+    private ObjectMapper objectMapper;
     private final Long userId = 1L;
     private final Event event = Event.builder()
             .id(null)
@@ -59,9 +73,23 @@ class EventServiceImplTest {
             .participantLimit(10)
             .build();
 
+    @BeforeEach
+    void init() {
+        objectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule());
+    }
+
     @Test
-    void createEvent() {
+    void createEvent() throws JsonProcessingException {
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
         Event savedEvent = eventService.createEvent(userId, event);
+
 
         Event receivedEvent = eventService.getEventByEventId(savedEvent.getId(), userId);
 
@@ -125,8 +153,16 @@ class EventServiceImplTest {
     }
 
     @Test
-    void updateEventByAnotherUser() {
+    void updateEventByAnotherUser() throws JsonProcessingException {
         Long otherUserId = 777L;
+
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
         Event savedEvent = eventService.createEvent(userId, event);
 
         NotAuthorizedException thrown = assertThrows(
@@ -171,8 +207,15 @@ class EventServiceImplTest {
     }
 
     @Test
-    void getEventByEventIdByOtherUser() {
+    void getEventByEventIdByOtherUser() throws JsonProcessingException {
         Long otherUserId = 777L;
+
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
 
         Event savedEvent = eventService.createEvent(userId, event);
 
@@ -253,6 +296,15 @@ class EventServiceImplTest {
         );
 
         assertEquals("User id=777 is not the owner of the event id=" + savedEvent.getId(), thrown.getMessage());
+    }
+
+    private UserDto createUser(long userId) {
+        return new UserDto(
+                userId,
+                "John",
+                "john@example.com",
+                "StrongP@ss1",
+                "Hello");
     }
 
 }

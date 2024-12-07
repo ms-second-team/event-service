@@ -1,5 +1,7 @@
 package meetup.event.service;
 
+import meetup.event.client.UserClient;
+import meetup.event.dto.UserDto;
 import meetup.event.dto.event.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
@@ -15,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,6 +42,9 @@ class EventServiceImplUnitTest {
 
     @Mock
     private EventMapper mapper;
+
+    @Mock
+    private UserClient userClient;
 
     @InjectMocks
     private EventServiceImpl service;
@@ -64,6 +71,11 @@ class EventServiceImplUnitTest {
     void createEvent() {
         when(repository.save(any()))
                 .thenReturn(event);
+
+        UserDto userDto = createUser(userId);
+
+        when(userClient.getUserById(userId, userId))
+                .thenReturn(new ResponseEntity<>(userDto, HttpStatus.OK));
 
         service.createEvent(userId, event);
 
@@ -228,6 +240,15 @@ class EventServiceImplUnitTest {
 
         verify(repository, never()).deleteById(any());
 
+    }
+
+    private UserDto createUser(long userId) {
+        return new UserDto(
+                userId,
+                "John",
+                "john@example.com",
+                "StrongP@ss1",
+                "Hello");
     }
 
 }

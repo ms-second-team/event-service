@@ -2,6 +2,8 @@ package meetup.event.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import meetup.event.client.UserClient;
+import meetup.event.dto.UserDto;
 import meetup.event.dto.teammember.NewTeamMemberDto;
 import meetup.event.dto.teammember.TeamMemberDto;
 import meetup.event.dto.teammember.UpdateTeamMemberDto;
@@ -24,11 +26,14 @@ public class TeamMemberServiceImpl implements TeamMemberService {
     private final TeamMemberRepository teamMemberRepository;
     private final EventService eventService;
     private final TeamMemberMapper teamMemberMapper;
+    private final UserClient userClient;
 
     @Override
     public TeamMemberDto addTeamMember(Long userId, NewTeamMemberDto newTeamMemberDto) {
+        UserDto userDto = userClient.getUserById(userId, userId).getBody();
         checkTeamMemberManagerOrOwnerRoleInEvent(newTeamMemberDto.eventId(), userId);
         TeamMemberId teamMemberId = new TeamMemberId(newTeamMemberDto.eventId(), newTeamMemberDto.userId());
+        UserDto teamMemberDto = userClient.getUserById(userId, teamMemberId.getUserId()).getBody();
         TeamMember teamMember = TeamMember.builder()
                 .id(teamMemberId)
                 .role(newTeamMemberDto.role())

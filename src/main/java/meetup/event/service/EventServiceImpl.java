@@ -2,6 +2,8 @@ package meetup.event.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import meetup.event.client.UserClient;
+import meetup.event.dto.UserDto;
 import meetup.event.dto.event.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
@@ -25,11 +27,13 @@ public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
+    private final UserClient userClient;
 
     @Override
     @Transactional
     public Event createEvent(Long userId, Event event) {
         checkStartAndEndDateTime(event.getStartDateTime(), event.getEndDateTime());
+        UserDto userDto = userClient.getUserById(userId, userId).getBody();
         event.setOwnerId(userId);
 
         Event eventSaved = eventRepository.save(event);
