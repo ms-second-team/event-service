@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.dockerjava.zerodep.shaded.org.apache.hc.core5.http.ContentType;
-import meetup.EventServiceApplication;
 import meetup.event.dto.UserDto;
 import meetup.event.dto.teammember.NewTeamMemberDto;
 import meetup.event.dto.teammember.TeamMemberDto;
@@ -32,7 +31,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SpringBootTest(classes = EventServiceApplication.class)
+@SpringBootTest
 @Testcontainers
 @AutoConfigureWireMock(port = 0)
 @TestPropertySource(properties = {
@@ -41,11 +40,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class TeamMemberServiceIntegrateTest {
     @Container
     @ServiceConnection
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16.4-alpine");
+    private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16.4-alpine");
     @Autowired
-    EventService eventService;
+    private EventService eventService;
     @Autowired
-    TeamMemberService teamMemberService;
+    private TeamMemberService teamMemberService;
     private ObjectMapper objectMapper;
     private final Event event = Event.builder()
             .id(null)

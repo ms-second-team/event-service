@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.dockerjava.zerodep.shaded.org.apache.hc.core5.http.ContentType;
-import meetup.EventServiceApplication;
 import meetup.event.dto.UserDto;
 import meetup.event.dto.event.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
@@ -36,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SpringBootTest(classes = EventServiceApplication.class)
+@SpringBootTest
 @Testcontainers
 @AutoConfigureWireMock(port = 0)
 @TestPropertySource(properties = {
@@ -45,13 +44,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class EventServiceImplTest {
     @Container
     @ServiceConnection
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16.4-alpine");
+    private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16.4-alpine");
 
     @Mock
     private EventMapper eventMapper;
 
     @Autowired
-    EventService eventService;
+    private EventService eventService;
     private ObjectMapper objectMapper;
     private final Long userId = 1L;
     private final Event event = Event.builder()
