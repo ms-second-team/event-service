@@ -1,4 +1,4 @@
-package meetup.event.repository;
+package meetup.event.repository.teammember;
 
 import meetup.event.model.teammember.TeamMember;
 import meetup.event.model.teammember.TeamMemberId;

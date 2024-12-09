@@ -10,8 +10,8 @@ import meetup.event.dto.teammember.UpdateTeamMemberDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
 import meetup.event.model.teammember.TeamMemberRole;
-import meetup.event.service.EventService;
-import meetup.event.service.TeamMemberService;
+import meetup.event.service.event.EventService;
+import meetup.event.service.teammember.TeamMemberService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,12 +29,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static meetup.event.model.event.RegistrationStatus.CLOSED;
+import static meetup.event.model.event.RegistrationStatus.OPEN;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -76,6 +76,7 @@ class EventControllerTest {
             .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
             .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
             .location("location")
+            .registrationStatus(OPEN)
             .build();
 
     private final UpdatedEventDto updatedEventDto = UpdatedEventDto.builder()
@@ -84,6 +85,7 @@ class EventControllerTest {
             .startDateTime(null)
             .endDateTime(LocalDateTime.of(2024, 12, 28, 22, 0, 0))
             .location(null)
+            .registrationStatus(CLOSED)
             .build();
 
     private final Event event = Event.builder()
@@ -94,6 +96,7 @@ class EventControllerTest {
             .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
             .location("location")
             .ownerId(null)
+            .registrationStatus(OPEN)
             .build();
 
     private final EventDto eventDto = EventDto.builder()
@@ -105,6 +108,7 @@ class EventControllerTest {
             .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
             .location("location")
             .ownerId(null)
+            .registrationStatus(OPEN)
             .build();
 
     @Test
@@ -129,7 +133,8 @@ class EventControllerTest {
                 .andExpect(jsonPath("$.startDateTime", is("2024-12-26 18:00:00")))
                 .andExpect(jsonPath("$.endDateTime", is("2024-12-26 22:00:00")))
                 .andExpect(jsonPath("$.location", is("location")))
-                .andExpect(jsonPath("$.ownerId", is(event.getOwnerId()), Long.class));
+                .andExpect(jsonPath("$.ownerId", is(event.getOwnerId()), Long.class))
+                .andExpect(jsonPath("$.registrationStatus", is("OPEN")));
 
         verify(eventMapper, times(1)).toEventFromNewEventDto(newEventDto);
         verify(eventService, times(1)).createEvent(anyLong(), any());
@@ -144,6 +149,7 @@ class EventControllerTest {
                 .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
                 .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
                 .location("location")
+                .registrationStatus(OPEN)
                 .build();
 
         mvc.perform(post("/events")
@@ -167,6 +173,7 @@ class EventControllerTest {
                 .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 00, 00))
                 .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 00, 00))
                 .location("location")
+                .registrationStatus(OPEN)
                 .build();
 
         mvc.perform(post("/events")
@@ -190,6 +197,7 @@ class EventControllerTest {
                 .startDateTime(LocalDateTime.of(2022, 12, 26, 18, 0, 0))
                 .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
                 .location("location")
+                .registrationStatus(OPEN)
                 .build();
 
         mvc.perform(post("/events")
@@ -213,6 +221,7 @@ class EventControllerTest {
                 .startDateTime(null)
                 .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
                 .location("location")
+                .registrationStatus(OPEN)
                 .build();
 
         mvc.perform(post("/events")
@@ -236,6 +245,7 @@ class EventControllerTest {
                 .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
                 .endDateTime(LocalDateTime.of(2023, 12, 26, 22, 0, 0))
                 .location("location")
+                .registrationStatus(OPEN)
                 .build();
 
         mvc.perform(post("/events")
@@ -259,6 +269,7 @@ class EventControllerTest {
                 .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
                 .endDateTime(null)
                 .location("location")
+                .registrationStatus(OPEN)
                 .build();
 
         mvc.perform(post("/events")
@@ -282,6 +293,31 @@ class EventControllerTest {
                 .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
                 .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
                 .location("")
+                .registrationStatus(OPEN)
+                .build();
+
+        mvc.perform(post("/events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(newEventDto))
+                        .header(HEADER_X_USER_ID, 1))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class, result.getResolvedException()))
+                .andExpect(jsonPath("$.status", is(HttpStatus.BAD_REQUEST.value())));
+
+        verify(eventMapper, never()).toEventDto(any());
+        verify(eventService, never()).createEvent(anyLong(), any());
+        verify(eventMapper, never()).toEventDto(any());
+    }
+
+    @Test
+    void createEventWithNullRegistrationStatus() throws Exception {
+        NewEventDto newEventDto = NewEventDto.builder()
+                .name("name")
+                .description("description")
+                .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
+                .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
+                .location("location")
+                .registrationStatus(null)
                 .build();
 
         mvc.perform(post("/events")
@@ -319,7 +355,8 @@ class EventControllerTest {
                 .andExpect(jsonPath("$.startDateTime", is("2024-12-26 18:00:00")))
                 .andExpect(jsonPath("$.endDateTime", is("2024-12-26 22:00:00")))
                 .andExpect(jsonPath("$.location", is("location")))
-                .andExpect(jsonPath("$.ownerId", is(event.getOwnerId()), Long.class));
+                .andExpect(jsonPath("$.ownerId", is(event.getOwnerId()), Long.class))
+                .andExpect(jsonPath("$.registrationStatus", is("OPEN")));
 
         verify(eventService, times(1)).updateEvent(anyLong(), anyLong(), any());
         verify(eventMapper, times(1)).toEventDto(event);
@@ -391,7 +428,8 @@ class EventControllerTest {
                 .andExpect(jsonPath("$.startDateTime", is("2024-12-26 18:00:00")))
                 .andExpect(jsonPath("$.endDateTime", is("2024-12-26 22:00:00")))
                 .andExpect(jsonPath("$.location", is("location")))
-                .andExpect(jsonPath("$.ownerId", is(event.getOwnerId()), Long.class));
+                .andExpect(jsonPath("$.ownerId", is(event.getOwnerId()), Long.class))
+                .andExpect(jsonPath("$.registrationStatus", is("OPEN")));
 
         verify(eventService, times(1)).getEventByEventId(anyLong(), anyLong());
         verify(eventMapper, times(1)).toEventDto(event);
@@ -401,7 +439,7 @@ class EventControllerTest {
     void getEvents() throws Exception {
         List<Event> events = new ArrayList<>();
 
-        when(eventService.getEvents(anyInt(), anyInt(), anyLong()))
+        when(eventService.getEvents(anyInt(), anyInt(), any()))
                 .thenReturn(events);
 
         mvc.perform(get("/events?from=0&size=20&userId=1")
@@ -411,11 +449,10 @@ class EventControllerTest {
                         .accept(MediaType.APPLICATION_JSON)
                         .queryParam("from", "0")
                         .queryParam("size", "20")
-                        .queryParam("userId", "1")
                         .header(HEADER_X_USER_ID, 1))
                 .andExpect(status().isOk());
 
-        verify(eventService, times(1)).getEvents(anyInt(), anyInt(), anyLong());
+        verify(eventService, times(1)).getEvents(anyInt(), anyInt(), any());
         verify(eventMapper, times(1)).toDtoList(events);
     }
 
@@ -423,7 +460,7 @@ class EventControllerTest {
     void getEventsWithNegativeFrom() throws Exception {
         List<Event> events = new ArrayList<>();
 
-        mvc.perform(get("/events?from=-3&size=20&userId=")
+        mvc.perform(get("/events?from=-3&size=20&userId=1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(events))
                         .header(HEADER_X_USER_ID, 1))
@@ -431,7 +468,7 @@ class EventControllerTest {
                 .andExpect(result -> Assertions.assertNotNull(result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.INTERNAL_SERVER_ERROR.value())));
 
-        verify(eventService, never()).getEvents(anyInt(), anyInt(), anyLong());
+        verify(eventService, never()).getEvents(anyInt(), anyInt(), any());
         verify(eventMapper, never()).toDtoList(any());
     }
 
@@ -439,7 +476,7 @@ class EventControllerTest {
     void getEventsWithNegativeSize() throws Exception {
         List<Event> events = new ArrayList<>();
 
-        mvc.perform(get("/events?from=3&size=-20&userId=")
+        mvc.perform(get("/events?from=3&size=-20&userId=1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(events))
                         .header(HEADER_X_USER_ID, 1))
@@ -447,7 +484,7 @@ class EventControllerTest {
                 .andExpect(result -> Assertions.assertNotNull(result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.INTERNAL_SERVER_ERROR.value())));
 
-        verify(eventService, never()).getEvents(anyInt(), anyInt(), anyLong());
+        verify(eventService, never()).getEvents(anyInt(), anyInt(), any());
         verify(eventMapper, never()).toDtoList(any());
     }
 
@@ -455,7 +492,7 @@ class EventControllerTest {
     void getEventsWithZeroSize() throws Exception {
         List<Event> events = new ArrayList<>();
 
-        mvc.perform(get("/events?from=3&size=0&userId=")
+        mvc.perform(get("/events?from=3&size=0&userId=1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(events))
                         .header(HEADER_X_USER_ID, 1))
@@ -463,7 +500,7 @@ class EventControllerTest {
                 .andExpect(result -> Assertions.assertNotNull(result.getResolvedException()))
                 .andExpect(jsonPath("$.status", is(HttpStatus.INTERNAL_SERVER_ERROR.value())));
 
-        verify(eventService, never()).getEvents(anyInt(), anyInt(), anyLong());
+        verify(eventService, never()).getEvents(anyInt(), anyInt(), any());
         verify(eventMapper, never()).toDtoList(any());
     }
 

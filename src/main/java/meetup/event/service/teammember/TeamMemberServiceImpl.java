@@ -1,9 +1,9 @@
-package meetup.event.service;
+package meetup.event.service.teammember;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import meetup.event.client.UserClient;
-import meetup.event.dto.UserDto;
+import meetup.event.dto.user.UserDto;
 import meetup.event.dto.teammember.NewTeamMemberDto;
 import meetup.event.dto.teammember.TeamMemberDto;
 import meetup.event.dto.teammember.UpdateTeamMemberDto;
@@ -12,7 +12,8 @@ import meetup.event.model.event.Event;
 import meetup.event.model.teammember.TeamMember;
 import meetup.event.model.teammember.TeamMemberId;
 import meetup.event.model.teammember.TeamMemberRole;
-import meetup.event.repository.TeamMemberRepository;
+import meetup.event.repository.teammember.TeamMemberRepository;
+import meetup.event.service.event.EventService;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
 import org.springframework.stereotype.Service;

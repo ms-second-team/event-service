@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import meetup.event.dto.event.EventSearchFilter;
 import meetup.event.dto.event.EventDto;
 import meetup.event.dto.event.NewEventDto;
 import meetup.event.dto.event.UpdatedEventDto;
@@ -19,8 +20,8 @@ import meetup.event.dto.teammember.TeamMemberDto;
 import meetup.event.dto.teammember.UpdateTeamMemberDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
-import meetup.event.service.EventService;
-import meetup.event.service.TeamMemberService;
+import meetup.event.service.event.EventService;
+import meetup.event.service.teammember.TeamMemberService;
 import meetup.exception.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -62,13 +63,10 @@ public class EventController {
     @PostMapping
     public ResponseEntity<EventDto> createEvent(@RequestHeader(HEADER_X_USER_ID) Long userId,
                                                 @RequestBody @Valid NewEventDto newEventDto) {
-
         log.info("---START CREATE EVENT ENDPOINT---");
-
         Event event = eventMapper.toEventFromNewEventDto(newEventDto);
         Event eventCreated = eventService.createEvent(userId, event);
         EventDto eventDto = eventMapper.toEventDto(eventCreated);
-
         return new ResponseEntity<>(eventDto, HttpStatus.CREATED);
     }
 
@@ -95,12 +93,9 @@ public class EventController {
                                                 @PathVariable Long id,
                                                 @RequestBody @Valid UpdatedEventDto
                                                         updatedEventDto) {
-
         log.info("---START UPDATE EVENT ENDPOINT---");
-
         Event event = eventService.updateEvent(userId, id, updatedEventDto);
         EventDto eventDto = eventMapper.toEventDto(event);
-
         return new ResponseEntity<>(eventDto, HttpStatus.OK);
     }
 
@@ -120,37 +115,34 @@ public class EventController {
     @GetMapping("/{id}")
     public ResponseEntity<EventDto> getEventById(@RequestHeader(HEADER_X_USER_ID) Long userId,
                                                  @PathVariable Long id) {
-
         log.info("---START GET EVENT BY ID ENDPOINT---");
-
         Event event = eventService.getEventByEventId(id, userId);
         EventDto eventDto = eventMapper.toEventDto(event);
-
         return new ResponseEntity<>(eventDto, HttpStatus.OK);
     }
 
-    @Operation(summary = "Find events by owner",
-            description = "Find events by owner with pagination")
+    @Operation(summary = "Find events by owner and registration status",
+            description = "Find events by owner and registration status with pagination")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Events were retrieved", content = {
                     @Content(
                             mediaType = "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = EventDto.class)))
             }),
+            @ApiResponse(responseCode = "404", description = "Unknown registration status", content = {
+                    @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            }),
             @ApiResponse(responseCode = "500", description = "Unknown error", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
             })
     })
     @GetMapping
-    public ResponseEntity<List<EventDto>> getEvents(@RequestParam(required = false) Long userId,
-                                                    @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
-                                                    @RequestParam(defaultValue = "10") @Positive Integer size) {
-
+    public ResponseEntity<List<EventDto>> getEvents(@RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                                    @RequestParam(defaultValue = "10") @Positive Integer size,
+                                                    EventSearchFilter filter) {
         log.info("---START GET EVENTS ENDPOINT---");
-
-        List<Event> events = eventService.getEvents(from, size, userId);
+        List<Event> events = eventService.getEvents(from, size, filter);
         List<EventDto> eventsDto = eventMapper.toDtoList(events);
-
         return new ResponseEntity<>(eventsDto, HttpStatus.OK);
     }
 
@@ -171,11 +163,8 @@ public class EventController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEventById(@RequestHeader(HEADER_X_USER_ID) Long userId,
                                                 @PathVariable Long id) {
-
         log.info("---START DELETE EVENT BY ID ENDPOINT--");
-
         eventService.deleteEventById(userId, id);
-
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -200,7 +189,7 @@ public class EventController {
             @RequestHeader(HEADER_X_USER_ID) Long userId,
             @RequestBody @Valid NewTeamMemberDto newTeamMemberDto) {
         log.debug("Creating team member id = '{}' event id = '{}' by user id = '{}'",
-                newTeamMemberDto.userId(), newTeamMemberDto.eventId(), userId);
+        newTeamMemberDto.userId(), newTeamMemberDto.eventId(), userId);
         TeamMemberDto teamMemberDto = teamMemberService.addTeamMember(userId, newTeamMemberDto);
         return new ResponseEntity<>(teamMemberDto, HttpStatus.CREATED);
     }

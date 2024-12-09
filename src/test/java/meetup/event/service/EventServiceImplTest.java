@@ -4,10 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.dockerjava.zerodep.shaded.org.apache.hc.core5.http.ContentType;
-import meetup.event.dto.UserDto;
+import meetup.event.dto.event.EventSearchFilter;
+import meetup.event.dto.user.UserDto;
 import meetup.event.dto.event.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
+import meetup.event.service.event.EventService;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
 import org.junit.Assert;
@@ -29,8 +31,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static meetup.event.model.event.RegistrationStatus.*;
+import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -45,10 +48,8 @@ class EventServiceImplTest {
     @Container
     @ServiceConnection
     private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16.4-alpine");
-
     @Mock
     private EventMapper eventMapper;
-
     @Autowired
     private EventService eventService;
     private ObjectMapper objectMapper;
@@ -62,6 +63,7 @@ class EventServiceImplTest {
             .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
             .location("location")
             .ownerId(null)
+            .registrationStatus(OPEN)
             .build();
 
     private final UpdatedEventDto updatedEventDto = UpdatedEventDto.builder()
@@ -71,6 +73,12 @@ class EventServiceImplTest {
             .endDateTime(LocalDateTime.of(2024, 12, 27, 23, 0, 0))
             .location("updated location")
             .participantLimit(10)
+            .registrationStatus(CLOSED)
+            .build();
+
+    private final EventSearchFilter eventSearchFilter = EventSearchFilter.builder()
+            .userId(userId)
+            .registrationStatus("OPEN")
             .build();
 
     @BeforeEach
@@ -89,7 +97,6 @@ class EventServiceImplTest {
                         .withStatus(HttpStatus.OK.value())));
 
         Event savedEvent = eventService.createEvent(userId, event);
-
 
         Event receivedEvent = eventService.getEventByEventId(savedEvent.getId(), userId);
 
@@ -157,6 +164,7 @@ class EventServiceImplTest {
         assertEquals(updatedEvent.getLocation(), updatedEventDto.location());
         assertEquals(savedEvent.getOwnerId(), updatedEvent.getOwnerId());
         assertEquals(updatedEventDto.participantLimit(), updatedEvent.getParticipantLimit());
+        assertEquals(updatedEventDto.registrationStatus(), updatedEvent.getRegistrationStatus());
     }
 
     @Test
@@ -275,16 +283,7 @@ class EventServiceImplTest {
     }
 
     @Test
-    void getEventsWithUserId() {
-        eventService.createEvent(userId, event);
-
-        List<Event> eventList = eventService.getEvents(0, 10, userId);
-
-        assertFalse(eventList.isEmpty());
-    }
-
-    @Test
-    void getEventsWithoutUserId() throws JsonProcessingException {
+    void getEventsWithEventSearchFilter() throws JsonProcessingException {
         UserDto userDto = createUser(userId);
         stubFor(get(urlEqualTo("/users/" + userId))
                 .willReturn(aResponse()
@@ -294,9 +293,151 @@ class EventServiceImplTest {
 
         eventService.createEvent(userId, event);
 
-        List<Event> eventList = eventService.getEvents(0, 10, null);
+        List<Event> eventList = eventService.getEvents(0, 10, eventSearchFilter);
 
         assertFalse(eventList.isEmpty());
+        assertEquals(eventList.getFirst().getOwnerId(), userId);
+        assertEquals(eventList.getFirst().getRegistrationStatus(), OPEN);
+        assertEquals(eventList.getLast().getOwnerId(), userId);
+        assertEquals(eventList.getLast().getRegistrationStatus(), OPEN);
+    }
+
+    @Test
+    void getEventsWithUserId() throws JsonProcessingException {
+        Event eventNumberTwo = Event.builder()
+                .id(null)
+                .name("event №2")
+                .description("event №2 description")
+                .createdDateTime(null)
+                .startDateTime(LocalDateTime.of(2024, 12, 27, 18, 0, 0))
+                .endDateTime(LocalDateTime.of(2024, 12, 27, 22, 0, 0))
+                .location("location")
+                .ownerId(null)
+                .registrationStatus(SUSPENDED)
+                .build();
+
+        EventSearchFilter filter = EventSearchFilter.builder()
+                .userId(userId)
+                .build();
+
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
+        eventService.createEvent(userId, event);
+        eventService.createEvent(userId, eventNumberTwo);
+
+        List<Event> eventList = eventService.getEvents(0, 10, filter);
+
+        assertFalse(eventList.isEmpty());
+        assertEquals(eventList.getFirst().getOwnerId(), userId);
+        ;
+        assertEquals(eventList.getLast().getOwnerId(), userId);
+    }
+
+    @Test
+    void getEventsWitRegistrationStatus() throws JsonProcessingException {
+        Long otherUserId = 2L;
+
+        Event eventNumberTwo = Event.builder()
+                .id(null)
+                .name("event №2")
+                .description("event №2 description")
+                .createdDateTime(null)
+                .startDateTime(LocalDateTime.of(2024, 12, 27, 18, 0, 0))
+                .endDateTime(LocalDateTime.of(2024, 12, 27, 22, 0, 0))
+                .location("location")
+                .ownerId(null)
+                .registrationStatus(SUSPENDED)
+                .build();
+
+        Event eventNumberThree = Event.builder()
+                .id(null)
+                .name("event №3")
+                .description("event №3 description")
+                .createdDateTime(null)
+                .startDateTime(LocalDateTime.of(2024, 12, 28, 18, 0, 0))
+                .endDateTime(LocalDateTime.of(2024, 12, 28, 22, 0, 0))
+                .location("location")
+                .ownerId(null)
+                .registrationStatus(OPEN)
+                .build();
+
+        EventSearchFilter filter = EventSearchFilter.builder()
+                .registrationStatus("OPEN")
+                .build();
+
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
+        UserDto otherUserDto = createUser(otherUserId);
+        stubFor(get(urlEqualTo("/users/" + otherUserId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(otherUserDto))
+                        .withStatus(HttpStatus.OK.value())));
+
+        eventService.createEvent(otherUserId, event);
+        eventService.createEvent(userId, eventNumberTwo);
+        eventService.createEvent(userId, eventNumberThree);
+
+        List<Event> eventList = eventService.getEvents(0, 10, filter);
+
+        assertFalse(eventList.isEmpty());
+    }
+
+    @Test
+    void getEventsWithoutEventSearchFilter() throws JsonProcessingException {
+        Event eventNumberTwo = Event.builder()
+                .id(null)
+                .name("event №2")
+                .description("event №2 description")
+                .createdDateTime(null)
+                .startDateTime(LocalDateTime.of(2024, 12, 27, 18, 0, 0))
+                .endDateTime(LocalDateTime.of(2024, 12, 27, 22, 0, 0))
+                .location("location")
+                .ownerId(null)
+                .registrationStatus(SUSPENDED)
+                .build();
+
+        EventSearchFilter filter = EventSearchFilter.builder()
+                .build();
+
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
+        eventService.createEvent(userId, event);
+        eventService.createEvent(userId, eventNumberTwo);
+
+        List<Event> eventList = eventService.getEvents(0, 10, filter);
+
+        assertFalse(eventList.isEmpty());
+    }
+
+    @Test
+    void getEventsWithNotFoundRegistrationStatus() {
+        EventSearchFilter filter = EventSearchFilter.builder()
+                .registrationStatus("STATUS")
+                .build();
+
+        NotFoundException thrown = assertThrows(
+                NotFoundException.class,
+                () -> eventService.getEvents(0, 10, filter),
+                ""
+        );
+
+        assertEquals("Unknown registration status: STATUS", thrown.getMessage());
     }
 
     @Test

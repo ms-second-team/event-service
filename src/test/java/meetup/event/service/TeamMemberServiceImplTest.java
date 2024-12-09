@@ -1,7 +1,7 @@
 package meetup.event.service;
 
 import meetup.event.client.UserClient;
-import meetup.event.dto.UserDto;
+import meetup.event.dto.user.UserDto;
 import meetup.event.dto.teammember.NewTeamMemberDto;
 import meetup.event.dto.teammember.TeamMemberDto;
 import meetup.event.dto.teammember.UpdateTeamMemberDto;
@@ -10,8 +10,10 @@ import meetup.event.model.event.Event;
 import meetup.event.model.teammember.TeamMember;
 import meetup.event.model.teammember.TeamMemberId;
 import meetup.event.model.teammember.TeamMemberRole;
-import meetup.event.repository.EventRepository;
-import meetup.event.repository.TeamMemberRepository;
+import meetup.event.repository.event.EventRepository;
+import meetup.event.repository.teammember.TeamMemberRepository;
+import meetup.event.service.event.EventService;
+import meetup.event.service.teammember.TeamMemberServiceImpl;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;

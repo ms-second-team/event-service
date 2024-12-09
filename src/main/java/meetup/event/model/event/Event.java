@@ -48,4 +48,7 @@ public class Event {
 
     @Column(name = "participant_limit")
     private int participantLimit;
+
+    @Column(name = "registration_status")
+    private RegistrationStatus registrationStatus;
 }

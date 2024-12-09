@@ -1,11 +1,13 @@
 package meetup.event.service;
 
 import meetup.event.client.UserClient;
-import meetup.event.dto.UserDto;
+import meetup.event.dto.event.EventSearchFilter;
+import meetup.event.dto.user.UserDto;
 import meetup.event.dto.event.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
-import meetup.event.repository.EventRepository;
+import meetup.event.repository.event.EventRepository;
+import meetup.event.service.event.EventServiceImpl;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
@@ -15,19 +17,16 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -177,29 +176,19 @@ class EventServiceImplUnitTest {
     }
 
     @Test
-    void getEventsWithUserId() {
-        List<Event> events = new ArrayList<>();
-        Pageable pageable = PageRequest.of(0, 10);
+    void getEventsWithSearchFilter() {
+        EventSearchFilter filter = EventSearchFilter.builder().build();
+        int page = 1;
+        int size = 10;
+        Specification<Event> spec = null;
+        Pageable pageable = PageRequest.of(page, size);
 
-        when(repository.findAllByOwnerId(userId, pageable))
-                .thenReturn(events);
+        when(repository.findAll(spec, pageable))
+                .thenReturn(Page.empty());
 
-        service.getEvents(0, 10, userId);
+        service.getEvents(page, size, filter);
 
-        verify(repository, times(1)).findAllByOwnerId(userId, PageRequest.of(0, 10));
-    }
-
-    @Test
-    void getEventsWithoutUserId() {
-        List<Event> events = new ArrayList<>();
-        Pageable pageable = PageRequest.of(0, 10);
-
-        when(repository.findAllByOwnerId(null, pageable))
-                .thenReturn(events);
-
-        service.getEvents(0, 10, null);
-
-        verify(repository, times(1)).findAllByOwnerId(null, PageRequest.of(0, 10));
+        verify(repository, times(1)).findAll(spec, PageRequest.of(page, size));
     }
 
     @Test
