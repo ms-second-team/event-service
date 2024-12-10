@@ -29,8 +29,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static meetup.event.model.event.RegistrationStatus.CLOSED;
-import static meetup.event.model.event.RegistrationStatus.OPEN;
+import static meetup.event.model.event.EventRegistrationStatus.CLOSED;
+import static meetup.event.model.event.EventRegistrationStatus.OPEN;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

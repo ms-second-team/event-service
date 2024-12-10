@@ -1,2 +1,2 @@
 ALTER TABLE events
-ADD COLUMN registration_status varchar(255)
+ADD COLUMN registration_status varchar(10)

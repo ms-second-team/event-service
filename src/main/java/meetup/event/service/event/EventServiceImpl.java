@@ -9,7 +9,6 @@ import meetup.event.dto.user.UserDto;
 import meetup.event.dto.event.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
-import meetup.event.model.event.RegistrationStatus;
 import meetup.event.repository.event.EventRepository;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
@@ -120,23 +119,10 @@ public class EventServiceImpl implements EventService {
         UserDto userDto = userClient.getUserById(userId, ownerId);
     }
 
-    public static RegistrationStatus findByRegistrationStatus(String name) {
-        if (name == null) {
-            return null;
-        }
-        for (RegistrationStatus status : RegistrationStatus.values()) {
-            if (name.equalsIgnoreCase(status.name())) {
-                return status;
-            }
-        }
-        throw new NotFoundException("Unknown registration status: " + name);
-    }
-
-
     private List<Specification<Event>> searchFilterToSpecificationList(EventSearchFilter searchFilter) {
         List<Specification<Event>> resultList = new ArrayList<>();
         resultList.add(EventSpecification.ownerIdEquals(searchFilter.userId()));
-        resultList.add(EventSpecification.registrationStatusEquals(findByRegistrationStatus(searchFilter.registrationStatus())));
+        resultList.add(EventSpecification.registrationStatusEquals(searchFilter.registrationStatus()));
         return resultList.stream().filter(Objects::nonNull).toList();
     }
 

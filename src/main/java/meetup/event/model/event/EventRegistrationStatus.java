@@ -1,6 +1,6 @@
 package meetup.event.model.event;
 
-public enum RegistrationStatus {
+public enum EventRegistrationStatus {
     OPEN,
     CLOSED,
     SUSPENDED

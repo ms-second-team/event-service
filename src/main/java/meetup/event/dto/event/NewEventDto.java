@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
-import meetup.event.model.event.RegistrationStatus;
+import meetup.event.model.event.EventRegistrationStatus;
 
 import java.time.LocalDateTime;
 
@@ -40,6 +40,6 @@ public record NewEventDto(
         int participantLimit,
         @Schema(description = "Event's registration status")
         @NotNull(message = "Event's registration status cannot be null")
-        RegistrationStatus registrationStatus
+        EventRegistrationStatus registrationStatus
 ) {
 }

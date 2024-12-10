@@ -3,7 +3,7 @@ package meetup.event.dto.event;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
-import meetup.event.model.event.RegistrationStatus;
+import meetup.event.model.event.EventRegistrationStatus;
 
 import java.time.LocalDateTime;
 
@@ -31,6 +31,6 @@ public record EventDto(
         @Schema(description = "Event's owner id")
         Long ownerId,
         @Schema(description = "Event's registration status")
-        RegistrationStatus registrationStatus
+        EventRegistrationStatus registrationStatus
 ) {
 }

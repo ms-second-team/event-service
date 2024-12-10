@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
-import meetup.event.model.event.RegistrationStatus;
+import meetup.event.model.event.EventRegistrationStatus;
 
 import java.time.LocalDateTime;
 
@@ -34,6 +34,6 @@ public record UpdatedEventDto(
         @PositiveOrZero(message = "Participant limit must be positive or zero")
         int participantLimit,
         @Schema(description = "Event's registration status")
-        RegistrationStatus registrationStatus
+        EventRegistrationStatus registrationStatus
 ) {
 }
