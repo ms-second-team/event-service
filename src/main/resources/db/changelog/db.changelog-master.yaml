@@ -33,3 +33,12 @@ databaseChangeLog:
             dbms: postgresql
             path: changeset/004_add_participant_limit.sql
             relativeToChangelogFile: true
+
+  - changeSet:
+      id: 5
+      author: Galina
+      changes:
+        - sqlFile:
+            dbms: postgresql
+            path: changeset/005_add_registration_status.sql
+            relativeToChangelogFile: true

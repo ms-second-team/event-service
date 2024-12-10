@@ -1,6 +1,7 @@
 package meetup.event.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -11,6 +12,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import meetup.event.dto.event.EventSearchFilter;
 import meetup.event.dto.event.EventDto;
 import meetup.event.dto.event.NewEventDto;
 import meetup.event.dto.event.UpdatedEventDto;
@@ -19,8 +21,8 @@ import meetup.event.dto.teammember.TeamMemberDto;
 import meetup.event.dto.teammember.UpdateTeamMemberDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
-import meetup.event.service.EventService;
-import meetup.event.service.TeamMemberService;
+import meetup.event.service.event.EventService;
+import meetup.event.service.teammember.TeamMemberService;
 import meetup.exception.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -61,14 +63,12 @@ public class EventController {
     })
     @PostMapping
     public ResponseEntity<EventDto> createEvent(@RequestHeader(HEADER_X_USER_ID) Long userId,
+                                                @Parameter(description = "New event data")
                                                 @RequestBody @Valid NewEventDto newEventDto) {
-
         log.info("---START CREATE EVENT ENDPOINT---");
-
         Event event = eventMapper.toEventFromNewEventDto(newEventDto);
         Event eventCreated = eventService.createEvent(userId, event);
         EventDto eventDto = eventMapper.toEventDto(eventCreated);
-
         return new ResponseEntity<>(eventDto, HttpStatus.CREATED);
     }
 
@@ -92,15 +92,14 @@ public class EventController {
     })
     @PatchMapping("/{id}")
     public ResponseEntity<EventDto> updateEvent(@RequestHeader(HEADER_X_USER_ID) Long userId,
+                                                @Parameter(description = "Event's id to update")
                                                 @PathVariable Long id,
+                                                @Parameter(description = "Update task data")
                                                 @RequestBody @Valid UpdatedEventDto
                                                         updatedEventDto) {
-
         log.info("---START UPDATE EVENT ENDPOINT---");
-
         Event event = eventService.updateEvent(userId, id, updatedEventDto);
         EventDto eventDto = eventMapper.toEventDto(event);
-
         return new ResponseEntity<>(eventDto, HttpStatus.OK);
     }
 
@@ -119,18 +118,16 @@ public class EventController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<EventDto> getEventById(@RequestHeader(HEADER_X_USER_ID) Long userId,
+                                                 @Parameter(description = "Event's id")
                                                  @PathVariable Long id) {
-
         log.info("---START GET EVENT BY ID ENDPOINT---");
-
         Event event = eventService.getEventByEventId(id, userId);
         EventDto eventDto = eventMapper.toEventDto(event);
-
         return new ResponseEntity<>(eventDto, HttpStatus.OK);
     }
 
-    @Operation(summary = "Find events by owner",
-            description = "Find events by owner with pagination")
+    @Operation(summary = "Find events by owner and registration status",
+            description = "Find events by owner and registration status with pagination")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Events were retrieved", content = {
                     @Content(
@@ -142,15 +139,15 @@ public class EventController {
             })
     })
     @GetMapping
-    public ResponseEntity<List<EventDto>> getEvents(@RequestParam(required = false) Long userId,
+    public ResponseEntity<List<EventDto>> getEvents(@Parameter(description = "Page number")
                                                     @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
-                                                    @RequestParam(defaultValue = "10") @Positive Integer size) {
-
+                                                    @Parameter(description = "Number of events per page")
+                                                    @RequestParam(defaultValue = "10") @Positive Integer size,
+                                                    @Parameter(description = "Search filer")
+                                                    EventSearchFilter filter) {
         log.info("---START GET EVENTS ENDPOINT---");
-
-        List<Event> events = eventService.getEvents(from, size, userId);
+        List<Event> events = eventService.getEvents(from, size, filter);
         List<EventDto> eventsDto = eventMapper.toDtoList(events);
-
         return new ResponseEntity<>(eventsDto, HttpStatus.OK);
     }
 
@@ -170,12 +167,10 @@ public class EventController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEventById(@RequestHeader(HEADER_X_USER_ID) Long userId,
+                                                @Parameter(description = "Event's id")
                                                 @PathVariable Long id) {
-
         log.info("---START DELETE EVENT BY ID ENDPOINT--");
-
         eventService.deleteEventById(userId, id);
-
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -198,6 +193,7 @@ public class EventController {
     @PostMapping("/teams")
     public ResponseEntity<TeamMemberDto> addTeamMember(
             @RequestHeader(HEADER_X_USER_ID) Long userId,
+            @Parameter(description = "New team member data")
             @RequestBody @Valid NewTeamMemberDto newTeamMemberDto) {
         log.debug("Creating team member id = '{}' event id = '{}' by user id = '{}'",
                 newTeamMemberDto.userId(), newTeamMemberDto.eventId(), userId);
@@ -222,6 +218,7 @@ public class EventController {
     @GetMapping("/teams/{eventId}")
     public ResponseEntity<List<TeamMemberDto>> getTeamsByEventId(
             @RequestHeader(HEADER_X_USER_ID) Long userId,
+            @Parameter(description = "Event's id")
             @PathVariable Long eventId) {
         log.debug("User id = '{}' requests team info event id = '{}'", userId, eventId);
         List<TeamMemberDto> teamMemberDtos = teamMemberService.getTeamsByEventId(userId, eventId);
@@ -247,8 +244,11 @@ public class EventController {
     @PatchMapping("/teams/{eventId}/{memberId}")
     public ResponseEntity<TeamMemberDto> updateTeamMemberInEvent(
             @RequestHeader(HEADER_X_USER_ID) Long userId,
+            @Parameter(description = "Event's id")
             @PathVariable Long eventId,
+            @Parameter(description = "Member's id")
             @PathVariable Long memberId,
+            @Parameter(description = "Update team member data")
             @RequestBody @Valid UpdateTeamMemberDto updateTeamMemberDto) {
         log.debug("Updating team member id = '{}' in team event id = '{}' by user id = '{}'", memberId, eventId, userId);
         TeamMemberDto teamMemberDto = teamMemberService.updateTeamMemberInEvent(userId, eventId, memberId, updateTeamMemberDto);
@@ -272,7 +272,9 @@ public class EventController {
     @DeleteMapping("/teams/{eventId}/{memberId}")
     public ResponseEntity<Void> deleteTeamMemberFromEvent(
             @RequestHeader(HEADER_X_USER_ID) Long userId,
+            @Parameter(description = "Event's id")
             @PathVariable Long eventId,
+            @Parameter(description = "Member's id")
             @PathVariable Long memberId) {
         log.debug("Deleting team member id = '{}' from team event id = '{}' by user id = '{}'", memberId, eventId, userId);
         teamMemberService.deleteTeamMemberFromEvent(userId, eventId, memberId);

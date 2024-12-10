@@ -1,4 +1,4 @@
-package meetup.event.service;
+package meetup.event.service.teammember;
 
 import meetup.event.dto.teammember.NewTeamMemberDto;
 import meetup.event.dto.teammember.TeamMemberDto;
