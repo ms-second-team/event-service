@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
+import meetup.event.model.event.EventRegistrationStatus;
 
 import java.time.LocalDateTime;
 
@@ -13,7 +14,6 @@ import static meetup.Constants.DATA_PATTERN;
 
 @Builder
 public record UpdatedEventDto(
-
         @Schema(description = "Event's name")
         @Pattern(regexp = "^(?!\\s*$).+", message = "Name can not be empty")
         String name,
@@ -32,6 +32,8 @@ public record UpdatedEventDto(
         String location,
         @Schema(description = "Event's participants limit")
         @PositiveOrZero(message = "Participant limit must be positive or zero")
-        int participantLimit
+        int participantLimit,
+        @Schema(description = "Event's registration status")
+        EventRegistrationStatus registrationStatus
 ) {
 }

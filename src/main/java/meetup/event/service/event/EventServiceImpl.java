@@ -1,22 +1,26 @@
-package meetup.event.service;
+package meetup.event.service.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import meetup.event.repository.event.EventSpecification;
 import meetup.event.client.UserClient;
-import meetup.event.dto.UserDto;
+import meetup.event.dto.event.EventSearchFilter;
+import meetup.event.dto.user.UserDto;
 import meetup.event.dto.event.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
-import meetup.event.repository.EventRepository;
+import meetup.event.repository.event.EventRepository;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,7 +43,6 @@ public class EventServiceImpl implements EventService {
         Event eventSaved = eventRepository.save(event);
 
         log.info("User with id=" + userId + " added a new event with id=" + event.getId());
-
         return eventSaved;
     }
 
@@ -73,9 +76,11 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public List<Event> getEvents(Integer from, Integer size, Long userId) {
+    public List<Event> getEvents(Integer from, Integer size, EventSearchFilter filter) {
         final Pageable pageable = PageRequest.of(from, size);
-        List<Event> events = eventRepository.findAllByOwnerId(userId, pageable);
+        final List<Specification<Event>> specifications = searchFilterToSpecificationList(filter);
+        final Specification<Event> resultSpec = specifications.stream().reduce(Specification::and).orElse(null);
+        final List<Event> events = eventRepository.findAll(resultSpec, pageable).getContent();
 
         log.info("A list of events has been generated");
 
@@ -112,6 +117,13 @@ public class EventServiceImpl implements EventService {
 
     private void checkUserExists(Long userId, Long ownerId) {
         UserDto userDto = userClient.getUserById(userId, ownerId);
+    }
+
+    private List<Specification<Event>> searchFilterToSpecificationList(EventSearchFilter searchFilter) {
+        List<Specification<Event>> resultList = new ArrayList<>();
+        resultList.add(EventSpecification.ownerIdEquals(searchFilter.userId()));
+        resultList.add(EventSpecification.registrationStatusEquals(searchFilter.registrationStatus()));
+        return resultList.stream().filter(Objects::nonNull).toList();
     }
 
 }

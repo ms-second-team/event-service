@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
+import meetup.event.model.event.EventRegistrationStatus;
 
 import java.time.LocalDateTime;
 
@@ -36,6 +37,9 @@ public record NewEventDto(
         String location,
         @Schema(description = "Event's participants limit")
         @PositiveOrZero(message = "Participant limit must be positive or zero")
-        int participantLimit
+        int participantLimit,
+        @Schema(description = "Event's registration status")
+        @NotNull(message = "Event's registration status cannot be null")
+        EventRegistrationStatus registrationStatus
 ) {
 }

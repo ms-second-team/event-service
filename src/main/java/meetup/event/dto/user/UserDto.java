@@ -1,4 +1,4 @@
-package meetup.event.dto;
+package meetup.event.dto.user;
 
 import lombok.Builder;
 

@@ -4,10 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.dockerjava.zerodep.shaded.org.apache.hc.core5.http.ContentType;
-import meetup.event.dto.UserDto;
+import jakarta.transaction.Transactional;
+import meetup.event.dto.event.EventSearchFilter;
+import meetup.event.dto.user.UserDto;
 import meetup.event.dto.event.UpdatedEventDto;
 import meetup.event.mapper.EventMapper;
 import meetup.event.model.event.Event;
+import meetup.event.service.event.EventService;
 import meetup.exception.NotAuthorizedException;
 import meetup.exception.NotFoundException;
 import org.junit.Assert;
@@ -29,14 +32,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static meetup.event.model.event.EventRegistrationStatus.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @Testcontainers
+@Transactional
 @AutoConfigureWireMock(port = 0)
 @TestPropertySource(properties = {
         "app.user-service.url=localhost:${wiremock.server.port}"
@@ -45,10 +49,8 @@ class EventServiceImplTest {
     @Container
     @ServiceConnection
     private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16.4-alpine");
-
     @Mock
     private EventMapper eventMapper;
-
     @Autowired
     private EventService eventService;
     private ObjectMapper objectMapper;
@@ -62,6 +64,31 @@ class EventServiceImplTest {
             .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
             .location("location")
             .ownerId(null)
+            .registrationStatus(OPEN)
+            .build();
+
+    private final Event eventNumberTwo = Event.builder()
+            .id(null)
+            .name("event №2")
+            .description("event №2 description")
+            .createdDateTime(null)
+            .startDateTime(LocalDateTime.of(2024, 12, 27, 18, 0, 0))
+            .endDateTime(LocalDateTime.of(2024, 12, 27, 22, 0, 0))
+            .location("location")
+            .ownerId(null)
+            .registrationStatus(SUSPENDED)
+            .build();
+
+    private final Event eventNumberThree = Event.builder()
+            .id(null)
+            .name("event №3")
+            .description("event №3 description")
+            .createdDateTime(null)
+            .startDateTime(LocalDateTime.of(2024, 12, 28, 18, 0, 0))
+            .endDateTime(LocalDateTime.of(2024, 12, 28, 22, 0, 0))
+            .location("location")
+            .ownerId(null)
+            .registrationStatus(OPEN)
             .build();
 
     private final UpdatedEventDto updatedEventDto = UpdatedEventDto.builder()
@@ -71,6 +98,12 @@ class EventServiceImplTest {
             .endDateTime(LocalDateTime.of(2024, 12, 27, 23, 0, 0))
             .location("updated location")
             .participantLimit(10)
+            .registrationStatus(CLOSED)
+            .build();
+
+    private final EventSearchFilter eventSearchFilter = EventSearchFilter.builder()
+            .userId(userId)
+            .registrationStatus(OPEN)
             .build();
 
     @BeforeEach
@@ -89,7 +122,6 @@ class EventServiceImplTest {
                         .withStatus(HttpStatus.OK.value())));
 
         Event savedEvent = eventService.createEvent(userId, event);
-
 
         Event receivedEvent = eventService.getEventByEventId(savedEvent.getId(), userId);
 
@@ -157,6 +189,7 @@ class EventServiceImplTest {
         assertEquals(updatedEvent.getLocation(), updatedEventDto.location());
         assertEquals(savedEvent.getOwnerId(), updatedEvent.getOwnerId());
         assertEquals(updatedEventDto.participantLimit(), updatedEvent.getParticipantLimit());
+        assertEquals(updatedEventDto.registrationStatus(), updatedEvent.getRegistrationStatus());
     }
 
     @Test
@@ -275,16 +308,21 @@ class EventServiceImplTest {
     }
 
     @Test
-    void getEventsWithUserId() {
-        eventService.createEvent(userId, event);
+    void getEventsWithSearchFilter() throws JsonProcessingException {
+        long otherUserId = 2L;
 
-        List<Event> eventList = eventService.getEvents(0, 10, userId);
+        Event additionalEvent = Event.builder()
+                .id(null)
+                .name("additional event")
+                .description("additional event description")
+                .createdDateTime(null)
+                .startDateTime(LocalDateTime.of(2024, 12, 29, 18, 0, 0))
+                .endDateTime(LocalDateTime.of(2024, 12, 29, 22, 0, 0))
+                .location("location")
+                .ownerId(null)
+                .registrationStatus(OPEN)
+                .build();
 
-        assertFalse(eventList.isEmpty());
-    }
-
-    @Test
-    void getEventsWithoutUserId() throws JsonProcessingException {
         UserDto userDto = createUser(userId);
         stubFor(get(urlEqualTo("/users/" + userId))
                 .willReturn(aResponse()
@@ -293,10 +331,134 @@ class EventServiceImplTest {
                         .withStatus(HttpStatus.OK.value())));
 
         eventService.createEvent(userId, event);
+        eventService.createEvent(userId, eventNumberTwo);
+        eventService.createEvent(userId, eventNumberThree);
 
-        List<Event> eventList = eventService.getEvents(0, 10, null);
+        UserDto otherUserDto = createUser(otherUserId);
+        stubFor(get(urlEqualTo("/users/" + otherUserId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(otherUserDto))
+                        .withStatus(HttpStatus.OK.value())));
 
-        assertFalse(eventList.isEmpty());
+        eventService.createEvent(otherUserId, additionalEvent);
+
+        List<Event> eventList = eventService.getEvents(0, 10, eventSearchFilter);
+
+        assertEquals(eventList.size(), 2);
+        assertEquals(eventList.getFirst().getOwnerId(), userId);
+        assertEquals(eventList.getFirst().getRegistrationStatus(), OPEN);
+        assertEquals(eventList.getLast().getOwnerId(), userId);
+        assertEquals(eventList.getLast().getRegistrationStatus(), OPEN);
+    }
+
+    @Test
+    void getEventsWithUserId() throws JsonProcessingException {
+        long otherUserId = 2L;
+
+        EventSearchFilter filter = EventSearchFilter.builder()
+                .userId(userId)
+                .build();
+
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
+        eventService.createEvent(userId, event);
+        eventService.createEvent(userId, eventNumberTwo);
+
+        UserDto otherUserDto = createUser(otherUserId);
+        stubFor(get(urlEqualTo("/users/" + otherUserId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(otherUserDto))
+                        .withStatus(HttpStatus.OK.value())));
+
+        eventService.createEvent(otherUserId, eventNumberThree);
+
+        List<Event> eventList = eventService.getEvents(0, 10, filter);
+
+        assertEquals(eventList.size(), 2);
+        assertEquals(eventList.getFirst().getOwnerId(), userId);
+        assertEquals(eventList.getFirst().getRegistrationStatus(), OPEN);
+        assertEquals(eventList.getLast().getOwnerId(), userId);
+        assertEquals(eventList.getLast().getRegistrationStatus(), SUSPENDED);
+    }
+
+    @Test
+    void getEventsWitRegistrationStatus() throws JsonProcessingException {
+        long otherUserId = 2L;
+
+        EventSearchFilter filter = EventSearchFilter.builder()
+                .registrationStatus(OPEN)
+                .build();
+
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
+        eventService.createEvent(userId, event);
+        eventService.createEvent(userId, eventNumberTwo);
+
+        UserDto otherUserDto = createUser(otherUserId);
+        stubFor(get(urlEqualTo("/users/" + otherUserId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(otherUserDto))
+                        .withStatus(HttpStatus.OK.value())));
+
+        eventService.createEvent(otherUserId, eventNumberThree);
+
+        List<Event> eventList = eventService.getEvents(0, 10, filter);
+
+        assertEquals(eventList.size(), 2);
+        assertEquals(eventList.getFirst().getOwnerId(), userId);
+        assertEquals(eventList.getFirst().getRegistrationStatus(), OPEN);
+        assertEquals(eventList.getLast().getOwnerId(), otherUserId);
+        assertEquals(eventList.getLast().getRegistrationStatus(), OPEN);
+    }
+
+    @Test
+    void getEventsWithoutEventSearchFilter() throws JsonProcessingException {
+        long otherUserId = 2L;
+
+        EventSearchFilter filter = EventSearchFilter.builder()
+                .build();
+
+        UserDto userDto = createUser(userId);
+        stubFor(get(urlEqualTo("/users/" + userId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(userDto))
+                        .withStatus(HttpStatus.OK.value())));
+
+        eventService.createEvent(userId, event);
+        eventService.createEvent(userId, eventNumberTwo);
+
+        UserDto otherUserDto = createUser(otherUserId);
+        stubFor(get(urlEqualTo("/users/" + otherUserId))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                        .withBody(objectMapper.writeValueAsString(otherUserDto))
+                        .withStatus(HttpStatus.OK.value())));
+
+        eventService.createEvent(otherUserId, eventNumberThree);
+
+        List<Event> eventList = eventService.getEvents(0, 10, filter);
+
+        assertEquals(eventList.size(), 3);
+        assertEquals(eventList.getFirst().getOwnerId(), userId);
+        assertEquals(eventList.getFirst().getRegistrationStatus(), OPEN);
+        assertEquals(eventList.get(1).getOwnerId(), userId);
+        assertEquals(eventList.get(1).getRegistrationStatus(), SUSPENDED);
+        assertEquals(eventList.getLast().getOwnerId(), otherUserId);
+        assertEquals(eventList.getLast().getRegistrationStatus(), OPEN);
     }
 
     @Test

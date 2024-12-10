@@ -1,7 +1,7 @@
 package meetup.event.client;
 
 import meetup.event.config.UserClientConfiguration;
-import meetup.event.dto.UserDto;
+import meetup.event.dto.user.UserDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
