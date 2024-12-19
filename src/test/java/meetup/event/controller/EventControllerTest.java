@@ -598,7 +598,7 @@ class EventControllerTest {
 
         UpdateTeamMemberDto invalidDto = new UpdateTeamMemberDto(null);
 
-        mvc.perform(patch("/events/teams/{eventId}/{memberId}", eventId, memberId)
+        mvc.perform(patch("/events/{eventId}/teams/members/{memberId}", eventId, memberId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(invalidDto))
                         .header(HEADER_X_USER_ID, userId))
