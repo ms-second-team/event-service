@@ -215,7 +215,7 @@ public class EventController {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
             })
     })
-    @GetMapping("/teams/{eventId}")
+    @GetMapping("/{eventId}/teams")
     public ResponseEntity<List<TeamMemberDto>> getTeamsByEventId(
             @RequestHeader(HEADER_X_USER_ID) Long userId,
             @Parameter(description = "Event's id")
@@ -241,7 +241,7 @@ public class EventController {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
             })
     })
-    @PatchMapping("/teams/{eventId}/{memberId}")
+    @PatchMapping("/{eventId}/teams/members/{memberId}")
     public ResponseEntity<TeamMemberDto> updateTeamMemberInEvent(
             @RequestHeader(HEADER_X_USER_ID) Long userId,
             @Parameter(description = "Event's id")
@@ -269,7 +269,7 @@ public class EventController {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
             })
     })
-    @DeleteMapping("/teams/{eventId}/{memberId}")
+    @DeleteMapping("/{eventId}/teams/members/{memberId}")
     public ResponseEntity<Void> deleteTeamMemberFromEvent(
             @RequestHeader(HEADER_X_USER_ID) Long userId,
             @Parameter(description = "Event's id")

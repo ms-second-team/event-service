@@ -73,8 +73,8 @@ class EventControllerTest {
     private final NewEventDto newEventDto = NewEventDto.builder()
             .name("event")
             .description("description")
-            .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
-            .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
+            .startDateTime(LocalDateTime.of(2025, 12, 26, 18, 0, 0))
+            .endDateTime(LocalDateTime.of(2025, 12, 26, 22, 0, 0))
             .location("location")
             .registrationStatus(OPEN)
             .build();
@@ -83,7 +83,7 @@ class EventControllerTest {
             .name(null)
             .description("description upd")
             .startDateTime(null)
-            .endDateTime(LocalDateTime.of(2024, 12, 28, 22, 0, 0))
+            .endDateTime(LocalDateTime.of(2025, 12, 28, 22, 0, 0))
             .location(null)
             .registrationStatus(CLOSED)
             .build();
@@ -92,8 +92,8 @@ class EventControllerTest {
             .id(1L).name("event")
             .description("event description")
             .createdDateTime(null)
-            .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
-            .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
+            .startDateTime(LocalDateTime.of(2025, 12, 26, 18, 0, 0))
+            .endDateTime(LocalDateTime.of(2025, 12, 26, 22, 0, 0))
             .location("location")
             .ownerId(null)
             .registrationStatus(OPEN)
@@ -104,8 +104,8 @@ class EventControllerTest {
             .name("event")
             .description("event description")
             .createdDateTime(LocalDateTime.now())
-            .startDateTime(LocalDateTime.of(2024, 12, 26, 18, 0, 0))
-            .endDateTime(LocalDateTime.of(2024, 12, 26, 22, 0, 0))
+            .startDateTime(LocalDateTime.of(2025, 12, 26, 18, 0, 0))
+            .endDateTime(LocalDateTime.of(2025, 12, 26, 22, 0, 0))
             .location("location")
             .ownerId(null)
             .registrationStatus(OPEN)
@@ -130,8 +130,8 @@ class EventControllerTest {
                 .andExpect(jsonPath("$.id", is(eventDto.id()), Long.class))
                 .andExpect(jsonPath("$.name", is(eventDto.name())))
                 .andExpect(jsonPath("$.description", is(eventDto.description())))
-                .andExpect(jsonPath("$.startDateTime", is("2024-12-26 18:00:00")))
-                .andExpect(jsonPath("$.endDateTime", is("2024-12-26 22:00:00")))
+                .andExpect(jsonPath("$.startDateTime", is("2025-12-26 18:00:00")))
+                .andExpect(jsonPath("$.endDateTime", is("2025-12-26 22:00:00")))
                 .andExpect(jsonPath("$.location", is("location")))
                 .andExpect(jsonPath("$.ownerId", is(event.getOwnerId()), Long.class))
                 .andExpect(jsonPath("$.registrationStatus", is("OPEN")));
@@ -352,8 +352,8 @@ class EventControllerTest {
                 .andExpect(jsonPath("$.id", is(eventDto.id()), Long.class))
                 .andExpect(jsonPath("$.name", is(eventDto.name())))
                 .andExpect(jsonPath("$.description", is(eventDto.description())))
-                .andExpect(jsonPath("$.startDateTime", is("2024-12-26 18:00:00")))
-                .andExpect(jsonPath("$.endDateTime", is("2024-12-26 22:00:00")))
+                .andExpect(jsonPath("$.startDateTime", is("2025-12-26 18:00:00")))
+                .andExpect(jsonPath("$.endDateTime", is("2025-12-26 22:00:00")))
                 .andExpect(jsonPath("$.location", is("location")))
                 .andExpect(jsonPath("$.ownerId", is(event.getOwnerId()), Long.class))
                 .andExpect(jsonPath("$.registrationStatus", is("OPEN")));
@@ -425,8 +425,8 @@ class EventControllerTest {
                 .andExpect(jsonPath("$.id", is(eventDto.id()), Long.class))
                 .andExpect(jsonPath("$.name", is(eventDto.name())))
                 .andExpect(jsonPath("$.description", is(eventDto.description())))
-                .andExpect(jsonPath("$.startDateTime", is("2024-12-26 18:00:00")))
-                .andExpect(jsonPath("$.endDateTime", is("2024-12-26 22:00:00")))
+                .andExpect(jsonPath("$.startDateTime", is("2025-12-26 18:00:00")))
+                .andExpect(jsonPath("$.endDateTime", is("2025-12-26 22:00:00")))
                 .andExpect(jsonPath("$.location", is("location")))
                 .andExpect(jsonPath("$.ownerId", is(event.getOwnerId()), Long.class))
                 .andExpect(jsonPath("$.registrationStatus", is("OPEN")));
@@ -598,7 +598,7 @@ class EventControllerTest {
 
         UpdateTeamMemberDto invalidDto = new UpdateTeamMemberDto(null);
 
-        mvc.perform(patch("/events/teams/{eventId}/{memberId}", eventId, memberId)
+        mvc.perform(patch("/events/{eventId}/teams/members/{memberId}", eventId, memberId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(invalidDto))
                         .header(HEADER_X_USER_ID, userId))
